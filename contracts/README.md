@@ -38,15 +38,28 @@ VITE_BADGE_CONTRACT_ADDRESS=0x...
 ## Contract Functions
 
 ### Public Functions (Users call these):
-- `mintBadge(uint256 badgeId)` - Mint a single badge
-- `mintBadges(uint256[] badgeIds)` - Batch mint multiple badges
+- `mintBadge(uint256 badgeId, bytes32 requestId, uint256 deadline, bytes signature)` - Mint with backend EIP-712 authorization
+- `mintBadges(uint256[] badgeIds, bytes32[] requestIds, uint256[] deadlines, bytes[] signatures)` - Batch mint with per-badge authorizations
 - `hasUserMinted(address user, uint256 badgeId)` - Check if user minted a badge
 - `getUserBadges(address user)` - Get all badges minted by user
 - `getBadgeInfo(uint256 badgeId)` - Get badge information
 
 ### Owner Functions:
 - `registerBadge(uint256, string, string, uint256)` - Register new badge type
+- `setAuthorizedSigner(address)` - Rotate backend signer key
 - `setBaseURI(string)` - Update metadata URI
+
+
+
+## Backend signer env
+
+Backend must set:
+
+```env
+BADGE_SIGNER_PK=0x...
+BADGE_CONTRACT_ADDRESS=0x...
+BADGE_CHAIN_ID=8453
+```
 
 ## Badge IDs
 

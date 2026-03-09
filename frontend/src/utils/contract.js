@@ -2,8 +2,8 @@ import { ethers } from "ethers";
 
 // Contract ABI (minimal - only functions we need)
 export const BADGE_CONTRACT_ABI = [
-  "function mintBadge(uint256 badgeId) external",
-  "function mintBadges(uint256[] calldata badgeIds) external",
+  "function mintBadge(uint256 badgeId, bytes32 requestId, uint256 deadline, bytes calldata signature) external",
+  "function mintBadges(uint256[] calldata badgeIds, bytes32[] calldata requestIds, uint256[] calldata deadlines, bytes[] calldata signatures) external",
   "function hasUserMinted(address user, uint256 badgeId) external view returns (bool)",
   "function getUserBadges(address user) external view returns (uint256[])",
   "function getBadgeInfo(uint256 badgeId) external view returns ((string name, string description, bool exists, uint256 maxSupply, uint256 currentSupply))",
@@ -109,18 +109,28 @@ export async function switchToBaseNetwork() {
 /**
  * Mint a badge to wallet
  */
-export async function mintBadgeToWallet(contractAddress, badgeId) {
+export async function mintBadgeToWallet(contractAddress, authorization) {
   const contract = await getBadgeContract(contractAddress);
-  const tx = await contract.mintBadge(badgeId);
+  const tx = await contract.mintBadge(
+    authorization.badgeId,
+    authorization.requestId,
+    authorization.deadline,
+    authorization.signature
+  );
   return await tx.wait();
 }
 
 /**
  * Batch mint multiple badges
  */
-export async function mintBadgesToWallet(contractAddress, badgeIds) {
+export async function mintBadgesToWallet(contractAddress, payload) {
   const contract = await getBadgeContract(contractAddress);
-  const tx = await contract.mintBadges(badgeIds);
+  const tx = await contract.mintBadges(
+    payload.badgeIds,
+    payload.requestIds,
+    payload.deadlines,
+    payload.signatures
+  );
   return await tx.wait();
 }
 
@@ -143,18 +153,10 @@ export async function getUserMintedBadges(contractAddress, userAddress) {
 /**
  * Estimate gas cost for minting
  */
-export async function estimateMintGas(contractAddress, badgeId) {
-  try {
-    const contract = await getBadgeContract(contractAddress);
-    const gasEstimate = await contract.mintBadge.estimateGas(badgeId);
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const feeData = await provider.getFeeData();
-    const gasCost = gasEstimate * feeData.gasPrice;
-    return ethers.formatEther(gasCost);
-  } catch (error) {
-    console.error("Gas estimation failed:", error);
-    return "0.01"; // Fallback estimate
-  }
+export async function estimateMintGas() {
+  // Exact estimate needs a live backend authorization payload.
+  // We return a conservative UX fallback value.
+  return "0.01";
 }
 
 

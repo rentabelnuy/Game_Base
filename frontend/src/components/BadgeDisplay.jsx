@@ -123,8 +123,8 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
       return;
     }
 
-    const numericBadgeId = BADGE_IDS[badgeId];
-    if (!numericBadgeId) {
+    const knownBadgeId = BADGE_IDS[badgeId];
+    if (!knownBadgeId) {
       alert("Invalid badge ID");
       return;
     }
@@ -146,9 +146,14 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
         }
       }
 
-      // Mint the badge
-      const tx = await mintBadgeToWallet(contractAddress, numericBadgeId);
-      
+      const claim = await claimBadge({ address, badgeId });
+      if (!claim.authorization) {
+        throw new Error("Backend did not return mint authorization");
+      }
+
+      // Mint the badge with backend authorization
+      const tx = await mintBadgeToWallet(contractAddress, claim.authorization);
+
       // Update status
       setMintedStatus(prev => ({ ...prev, [badgeId]: true }));
       
