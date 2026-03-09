@@ -13,7 +13,7 @@ export default function App() {
   const [gameKey, setGameKey] = useState(0); // Key to force GameBoard reset
   
   // 🔧 DEV MODE - Set to false to enable wallet login
-  const DEV_MODE = true;
+  const DEV_MODE = false;
   
   useEffect(() => {
     // Check if running in Farcaster
