@@ -1,6 +1,8 @@
-# Battle Arena Badge Contract
+# Battle Arena Badge Contract (Base V2)
 
 ERC-1155 NFT contract for Battle Arena game badges deployed on Base network.
+
+Current deployment script deploys `BattleArenaBadgesBaseV2` (safer version with pause + reentrancy guard + bounded batch mint).
 
 ## Setup
 
@@ -16,6 +18,7 @@ PRIVATE_KEY=your_private_key_here
 BASE_RPC_URL=https://mainnet.base.org
 BASESCAN_API_KEY=your_basescan_api_key (optional, for verification)
 BADGE_BASE_URI=https://your-domain.com/api/badges/
+BADGE_AUTHORIZED_SIGNER=0xYourBackendSignerAddress
 ```
 
 ## Deployment
