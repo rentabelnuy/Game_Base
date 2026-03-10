@@ -1,5 +1,5 @@
 import { getGame } from "./matchmaking.js";
-import { BOT, BOTS } from "./bot.js";
+import { BOT, BOTS, pickBotTileForRound } from "./bot.js";
 import { recordScore, recordGameResult } from "./leaderboard.js";
 
 // Submit RPS choice
@@ -86,90 +86,38 @@ export function submitTile(req, res) {
   // Store tile selection
   game.tileSelections[address] = tile;
 
-  // Debug: Log game state
-  console.log('=== TILE SUBMISSION DEBUG ===');
-  console.log('Game bot flag:', game.bot);
-  console.log('Game bots array:', game.bots);
-  console.log('Available tiles:', game.availableTiles);
-  console.log('Eliminated players:', game.eliminated);
-  console.log('Current tile selections:', game.tileSelections);
-
-  // If bot game, make all bots' tile selections immediately (smart selection)
+  // If bot game, make all bots' tile selections immediately with collision-avoidance.
   if (game.bot) {
     const botsToSelect = game.bots && game.bots.length > 0 ? game.bots : (game.bot ? [BOT.id] : []);
-    
-    console.log(`Processing ${botsToSelect.length} bot(s) for tile selection...`);
-    
+    const reservedTiles = new Set([tile]);
+
     botsToSelect.forEach(botId => {
-      // Only select if bot is not eliminated and hasn't selected yet
       const isEliminated = game.eliminated.includes(botId);
       const hasSelected = game.tileSelections[botId] !== undefined && game.tileSelections[botId] !== null;
-      
-      console.log(`Bot ${botId}: eliminated=${isEliminated}, hasSelected=${hasSelected}`);
-      
+
       if (!isEliminated && !hasSelected) {
-        // Get base bot type for this bot instance
         const baseBotType = (game.botTypes && game.botTypes[botId]) || botId;
         const bot = BOTS[baseBotType] || BOT;
-        if (bot && bot.tile) {
-          const selectedTile = bot.tile(game.availableTiles || []);
-          game.tileSelections[botId] = selectedTile;
-          console.log(`✅ Bot ${botId} (${baseBotType}) selected tile: ${selectedTile}`);
-        } else {
-          console.error(`❌ Bot ${botId} not found or has no tile function`);
-        }
-      } else if (isEliminated) {
-        console.log(`⏭️ Bot ${botId} is eliminated, skipping`);
-      } else if (hasSelected) {
-        console.log(`⏭️ Bot ${botId} already selected: ${game.tileSelections[botId]}`);
+        const selectedTile = pickBotTileForRound(bot, game.availableTiles || [], reservedTiles);
+        game.tileSelections[botId] = selectedTile;
+        reservedTiles.add(selectedTile);
       }
     });
-  } else {
-    console.log('Not a bot game, skipping bot selection');
   }
 
   // Check if all active players have selected tiles
   const activePlayers = game.players.filter(p => !game.eliminated.includes(p));
   const allSelected = activePlayers.every(p => {
     const hasSelection = game.tileSelections[p] !== undefined && game.tileSelections[p] !== null;
-    if (!hasSelection) {
-      console.log(`Player ${p} has not selected a tile yet. Eliminated: ${game.eliminated.includes(p)}`);
-    }
     return hasSelection;
   });
   
-  console.log(`Active players: ${activePlayers.join(', ')}, All selected: ${allSelected}`);
-  console.log(`Tile selections:`, JSON.stringify(game.tileSelections));
-
-  // For bot games, ensure we process immediately if bots have selected
-  // Double-check: if it's a bot game and we have the right number of selections
-  if (game.bot) {
-    const botSelections = (game.bots || []).filter(botId => 
-      !game.eliminated.includes(botId) && game.tileSelections[botId] !== undefined
-    );
-    const expectedSelections = activePlayers.length;
-    const actualSelections = Object.keys(game.tileSelections).length;
-    
-    console.log(`Bot game check: ${botSelections.length} bots selected, ${expectedSelections} expected, ${actualSelections} actual`);
-    
-    // If all active players (including bots) have selected, process immediately
-    if (allSelected || (botSelections.length === (game.bots || []).filter(b => !game.eliminated.includes(b)).length && actualSelections >= expectedSelections)) {
-      console.log('✅ All players ready, processing round immediately...');
-      return processRound(game, address, res);
-    } else {
-      console.warn(`⚠️ Not all bots selected. Bot selections: ${botSelections.length}, Expected bots: ${(game.bots || []).filter(b => !game.eliminated.includes(b)).length}`);
-    }
-  }
 
   // Process if all selected (for non-bot games or if check passed)
   if (allSelected) {
-    console.log('Processing round immediately...');
     return processRound(game, address, res);
   }
 
-  // This should rarely happen for bot games
-  console.warn(`❌ Not all players ready. Active: ${activePlayers.length}, Selections: ${Object.keys(game.tileSelections).length}`);
-  console.warn(`Game state: bot=${game.bot}, bots=${JSON.stringify(game.bots)}, eliminated=${JSON.stringify(game.eliminated)}`);
   res.json({ 
     tileSubmitted: true,
     allPlayersReady: false,
@@ -384,33 +332,28 @@ function processRound(game, address, res) {
 }
 
 function resolveRPSBattle(players, rpsChoices) {
-  // If only one player, they win
   if (players.length === 1) return players[0];
-  
-  // Get RPS choices for these players
+
   const choices = players.map(p => ({ player: p, choice: rpsChoices[p] }));
-  
-  // Determine winner based on RPS rules
-  const rockPlayers = choices.filter(c => c.choice === "ROCK");
-  const paperPlayers = choices.filter(c => c.choice === "PAPER");
-  const scissorsPlayers = choices.filter(c => c.choice === "SCISSORS");
-  
-  // Rock beats Scissors
-  if (rockPlayers.length > 0 && scissorsPlayers.length > 0 && paperPlayers.length === 0) {
-    // If multiple rocks, return first one
-    return rockPlayers[0].player;
+  const byChoice = {
+    ROCK: choices.filter(c => c.choice === "ROCK").map(c => c.player),
+    PAPER: choices.filter(c => c.choice === "PAPER").map(c => c.player),
+    SCISSORS: choices.filter(c => c.choice === "SCISSORS").map(c => c.player)
+  };
+
+  const hasRock = byChoice.ROCK.length > 0;
+  const hasPaper = byChoice.PAPER.length > 0;
+  const hasScissors = byChoice.SCISSORS.length > 0;
+
+  let candidates = players;
+  if (hasRock && hasScissors && !hasPaper) {
+    candidates = byChoice.ROCK;
+  } else if (hasPaper && hasRock && !hasScissors) {
+    candidates = byChoice.PAPER;
+  } else if (hasScissors && hasPaper && !hasRock) {
+    candidates = byChoice.SCISSORS;
   }
-  // Paper beats Rock
-  if (paperPlayers.length > 0 && rockPlayers.length > 0 && scissorsPlayers.length === 0) {
-    return paperPlayers[0].player;
-  }
-  // Scissors beats Paper
-  if (scissorsPlayers.length > 0 && paperPlayers.length > 0 && rockPlayers.length === 0) {
-    return scissorsPlayers[0].player;
-  }
-  
-  // If all same choice, it's a tie - first player wins (or could be random)
-  // If mixed (e.g., Rock + Paper + Scissors), first player wins
-  return players[0];
+
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 

@@ -1,6 +1,19 @@
 // Same tile pool as frontend BASE_TILES (expanded)
 const BASE_TILES = [1,1,2,2,3,3,5,5,7,7,10,10,15,15,25,25,50,75,100];
 
+const uniqueValuesDesc = (tiles) => [...new Set(tiles)].sort((a, b) => b - a);
+
+const pickByPreference = (availableTiles, preference) => {
+  const uniqueDesc = uniqueValuesDesc(availableTiles);
+  for (const preferredTile of preference) {
+    if (uniqueDesc.includes(preferredTile)) {
+      return preferredTile;
+    }
+  }
+
+  return availableTiles[Math.floor(Math.random() * availableTiles.length)];
+};
+
 // Different tile selection strategies for variety
 const aggressiveSelection = (availableTiles) => {
   // Always goes for highest value tiles (80% chance)
@@ -53,6 +66,7 @@ export const BOTS = {
   BOT_ALPHA: {
     id: "BOT_ALPHA",
     name: "Bot Alpha",
+    preferredTiles: [100, 75, 50, 25, 15, 10, 7, 5, 3, 2, 1],
     rps: () => ["ROCK","PAPER","SCISSORS"][Math.floor(Math.random()*3)],
     tile: (availableTiles) => {
       if (!availableTiles || availableTiles.length === 0) {
@@ -64,6 +78,7 @@ export const BOTS = {
   BOT_BETA: {
     id: "BOT_BETA",
     name: "Bot Beta",
+    preferredTiles: [25, 15, 10, 7, 5, 3, 2, 1, 50, 75, 100],
     rps: () => ["ROCK","PAPER","SCISSORS"][Math.floor(Math.random()*3)],
     tile: (availableTiles) => {
       if (!availableTiles || availableTiles.length === 0) {
@@ -75,6 +90,7 @@ export const BOTS = {
   BOT_GAMMA: {
     id: "BOT_GAMMA",
     name: "Bot Gamma",
+    preferredTiles: [50, 25, 75, 15, 10, 7, 5, 3, 2, 1, 100],
     rps: () => ["ROCK","PAPER","SCISSORS"][Math.floor(Math.random()*3)],
     tile: (availableTiles) => {
       if (!availableTiles || availableTiles.length === 0) {
@@ -121,4 +137,22 @@ export const getRandomBot = (nickname = null) => {
     ...baseBot,
     nickname: nickname || getRandomNickname()
   };
+};
+
+export const pickBotTileForRound = (bot, availableTiles, reservedTiles = new Set()) => {
+  if (!availableTiles || availableTiles.length === 0) {
+    return BASE_TILES[Math.floor(Math.random() * BASE_TILES.length)];
+  }
+
+  const preferred = (bot?.preferredTiles || []).filter(tile => !reservedTiles.has(tile));
+  if (preferred.length > 0) {
+    return pickByPreference(availableTiles, preferred);
+  }
+
+  const freeTiles = uniqueValuesDesc(availableTiles).filter(tile => !reservedTiles.has(tile));
+  if (freeTiles.length > 0) {
+    return freeTiles[0];
+  }
+
+  return bot?.tile ? bot.tile(availableTiles) : BASE_TILES[Math.floor(Math.random() * BASE_TILES.length)];
 };

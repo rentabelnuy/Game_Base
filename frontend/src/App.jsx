@@ -4,7 +4,6 @@ import Leaderboard from "./components/Leaderboard";
 import BadgeDisplay from "./components/BadgeDisplay";
 import BaseWalletLogin from "./components/BaseWalletLogin";
 import FarcasterLogin from "./components/FarcasterLogin";
-import { checkBaseNetwork } from "./utils/contract";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -42,6 +41,15 @@ export default function App() {
     setUser(loginData);
   };
 
+
+  const handleOpenBaseApp = () => {
+    window.open("https://base.app", "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpenFarcaster = () => {
+    window.open("https://warpcast.com/~/apps", "_blank", "noopener,noreferrer");
+  };
+
   // Show login if not authenticated
   if (!user) {
     return (
@@ -53,7 +61,12 @@ export default function App() {
           ) : (
             <>
               <FarcasterLogin onLogin={handleLogin} />
-              <BaseWalletLogin onLogin={handleLogin} />
+              <BaseWalletLogin onLogin={handleLogin} title="Login with External Wallet" />
+              <div className="login-card quick-links">
+                <h3>🚀 Open Platforms</h3>
+                <button className="btn-secondary" onClick={handleOpenBaseApp}>Open Base App</button>
+                <button className="btn-secondary" onClick={handleOpenFarcaster} style={{ marginTop: "10px" }}>Open Farcaster Apps</button>
+              </div>
             </>
           )}
         </div>

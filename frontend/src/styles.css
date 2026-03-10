@@ -473,16 +473,6 @@ button:hover {
     inset 0 0 0 1px rgba(100, 116, 139, 0.3);
 }
 
-@media (max-width: 480px) {
-  .tile.grid-tile[data-value="50"],
-  .tile.grid-tile[data-value="75"],
-  .tile.grid-tile[data-value="100"] {
-    width: 65px;
-    height: 65px;
-    font-size: 20px;
-  }
-}
-
 /* ===============================
    MODAL
 ================================ */
@@ -1611,3 +1601,7 @@ button,
   border-radius: 8px;
 }
 
+
+.quick-links button {
+  width: 100%;
+}

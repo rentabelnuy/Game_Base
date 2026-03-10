@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { ethers } from "ethers";
+import { checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
 
 /**
  * BaseWalletLogin
  * Класичний EVM login для Base dApp
  */
-export default function BaseWalletLogin({ onLogin }) {
+export default function BaseWalletLogin({ onLogin, title = "Login with Base Wallet" }) {
   const [error, setError] = useState("");
 
   const connect = async () => {
@@ -13,6 +14,11 @@ export default function BaseWalletLogin({ onLogin }) {
       if (!window.ethereum) {
         setError("No wallet detected");
         return;
+      }
+
+      const onBase = await checkBaseNetwork();
+      if (!onBase) {
+        await switchToBaseNetwork();
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -46,7 +52,7 @@ timestamp: ${payload.timestamp}
 
   return (
     <div className="login-card">
-      <h3>🔵 Login with Base Wallet</h3>
+      <h3>🔵 {title}</h3>
       <p className="hint" style={{ marginBottom: '15px', fontSize: '13px' }}>
         Connect your wallet to play on Base. Fast & cheap transactions guaranteed.
       </p>
