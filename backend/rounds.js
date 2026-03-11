@@ -89,7 +89,7 @@ export function submitTile(req, res) {
   // If bot game, make all bots' tile selections immediately with collision-avoidance.
   if (game.bot) {
     const botsToSelect = game.bots && game.bots.length > 0 ? game.bots : (game.bot ? [BOT.id] : []);
-    const reservedTiles = new Set([tile]);
+    const reservedTiles = new Set();
 
     botsToSelect.forEach(botId => {
       const isEliminated = game.eliminated.includes(botId);
@@ -98,7 +98,7 @@ export function submitTile(req, res) {
       if (!isEliminated && !hasSelected) {
         const baseBotType = (game.botTypes && game.botTypes[botId]) || botId;
         const bot = BOTS[baseBotType] || BOT;
-        const selectedTile = pickBotTileForRound(bot, game.availableTiles || [], reservedTiles);
+        const selectedTile = pickBotTileForRound(bot, game.availableTiles || [], reservedTiles, tile);
         game.tileSelections[botId] = selectedTile;
         reservedTiles.add(selectedTile);
       }

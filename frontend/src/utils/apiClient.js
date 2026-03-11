@@ -3,7 +3,24 @@
  */
 class ApiClient {
   constructor(baseURL) {
-    this.baseURL = baseURL || import.meta.env.VITE_API_BASE || "http://localhost:3001";
+    this.baseURL = this.resolveBaseURL(baseURL);
+  }
+
+  resolveBaseURL(baseURL) {
+    const explicitBase = baseURL || import.meta.env.VITE_API_BASE;
+    if (explicitBase) {
+      return explicitBase.replace(/\/$/, "");
+    }
+
+    if (typeof window !== "undefined") {
+      const { origin, hostname } = window.location;
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:3001";
+      }
+      return origin;
+    }
+
+    return "http://localhost:3001";
   }
 
   /**
@@ -14,8 +31,10 @@ class ApiClient {
    * @throws {Error} - If request fails
    */
   async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await fetch(url, {
         ...options,
         headers: {
           "Content-Type": "application/json",
@@ -40,7 +59,7 @@ class ApiClient {
       // Network errors or other fetch failures
       console.error("API request failed:", error);
       throw new ApiError(
-        error.message || "Network error. Please check your connection.",
+        `Network error while calling ${url}. ${error.message || "Please check your connection."}`,
         0,
         { originalError: error }
       );
@@ -86,4 +105,3 @@ export class ApiError extends Error {
 
 // Create and export singleton instance
 export const api = new ApiClient();
-

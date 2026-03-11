@@ -101,6 +101,13 @@ export const BOTS = {
   }
 };
 
+
+const BOT_TILE_BEHAVIOR = {
+  BOT_ALPHA: { challengePlayerOnHighTileChance: 0.7 },
+  BOT_BETA: { challengePlayerOnHighTileChance: 0.35 },
+  BOT_GAMMA: { challengePlayerOnHighTileChance: 0.5 },
+};
+
 // Additional strategy for more bots (if we add more later)
 const smartTileSelection = balancedSelection; // Fallback to balanced
 
@@ -139,9 +146,25 @@ export const getRandomBot = (nickname = null) => {
   };
 };
 
-export const pickBotTileForRound = (bot, availableTiles, reservedTiles = new Set()) => {
+export const pickBotTileForRound = (bot, availableTiles, reservedTiles = new Set(), playerTile = null) => {
   if (!availableTiles || availableTiles.length === 0) {
     return BASE_TILES[Math.floor(Math.random() * BASE_TILES.length)];
+  }
+
+  const uniqueDesc = uniqueValuesDesc(availableTiles);
+  const behavior = BOT_TILE_BEHAVIOR[bot?.id] || { challengePlayerOnHighTileChance: 0.45 };
+
+  // Bots should sometimes contest the player's big tile instead of always avoiding collisions.
+  if (playerTile && uniqueDesc.includes(playerTile) && playerTile >= 25) {
+    if (Math.random() < behavior.challengePlayerOnHighTileChance) {
+      return playerTile;
+    }
+  }
+
+  // Use each bot's strategy first, then fallback to preference list.
+  const strategyTile = bot?.tile ? bot.tile(availableTiles) : null;
+  if (strategyTile && uniqueDesc.includes(strategyTile) && !reservedTiles.has(strategyTile)) {
+    return strategyTile;
   }
 
   const preferred = (bot?.preferredTiles || []).filter(tile => !reservedTiles.has(tile));
@@ -149,10 +172,10 @@ export const pickBotTileForRound = (bot, availableTiles, reservedTiles = new Set
     return pickByPreference(availableTiles, preferred);
   }
 
-  const freeTiles = uniqueValuesDesc(availableTiles).filter(tile => !reservedTiles.has(tile));
+  const freeTiles = uniqueDesc.filter(tile => !reservedTiles.has(tile));
   if (freeTiles.length > 0) {
     return freeTiles[0];
   }
 
-  return bot?.tile ? bot.tile(availableTiles) : BASE_TILES[Math.floor(Math.random() * BASE_TILES.length)];
+  return availableTiles[Math.floor(Math.random() * availableTiles.length)];
 };
