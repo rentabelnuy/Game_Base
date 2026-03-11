@@ -28,6 +28,11 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+app.post("/webhook/farcaster", (req, res) => {
+  console.log("Farcaster webhook event", req.body);
+  res.status(200).json({ ok: true });
+});
+
 app.post("/lobby/join", joinLobby);
 app.post("/round/rps", submitRPS);
 app.post("/round/tile", submitTile);

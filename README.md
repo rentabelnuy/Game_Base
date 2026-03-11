@@ -267,6 +267,11 @@ If you want NFT badge functionality:
    - Test mobile responsiveness
    - Verify wallet connection works in Farcaster context
 
+5. **Manifest file in this repo**:
+   - File: `frontend/public/.well-known/farcaster.json`
+   - Required: replace `accountAssociation.header/payload/signature` with values generated in the Farcaster Developer Portal
+   - If your domain changes, update every `https://...vercel.app` URL in the manifest to your final frontend domain
+
 ---
 
 ### Part 5: Configure Base App Integration

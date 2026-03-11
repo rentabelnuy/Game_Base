@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Battle Arena Splash">
+  <rect width="1200" height="630" fill="#1a1447"/>
+  <circle cx="600" cy="315" r="190" fill="#0c0a24" stroke="#7a5cff" stroke-width="16"/>
+  <text x="600" y="300" font-size="72" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif">Battle Arena</text>
+  <text x="600" y="370" font-size="38" text-anchor="middle" fill="#b8adff" font-family="Arial, sans-serif">RPS + Tile Battles on Base</text>
+</svg>
