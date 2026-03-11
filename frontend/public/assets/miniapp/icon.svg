@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Battle Arena">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1447" />
+      <stop offset="100%" stop-color="#3b1fb8" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)" />
+  <circle cx="256" cy="256" r="166" fill="#0c0a24" stroke="#7a5cff" stroke-width="18" />
+  <text x="256" y="286" font-size="170" text-anchor="middle" fill="#ffffff">⚔</text>
+</svg>
