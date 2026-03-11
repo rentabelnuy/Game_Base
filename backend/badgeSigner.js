@@ -2,20 +2,22 @@ import 'dotenv/config';
 import { Wallet, getAddress } from "ethers";
 import { randomUUID } from "crypto";
 
-if (!process.env.BADGE_SIGNER_PK) {
-  throw new Error('BADGE_SIGNER_PK not found in .env');
-}
-if (!process.env.BADGE_CONTRACT_ADDRESS) {
-  throw new Error('BADGE_CONTRACT_ADDRESS not found in .env');
-}
+const signerPk = process.env.BADGE_SIGNER_PK;
+const contractAddress = process.env.BADGE_CONTRACT_ADDRESS;
 
-const wallet = new Wallet(process.env.BADGE_SIGNER_PK);
+const missingConfig = [];
+if (!signerPk) missingConfig.push("BADGE_SIGNER_PK");
+if (!contractAddress) missingConfig.push("BADGE_CONTRACT_ADDRESS");
+
+const isBadgeSigningConfigured = missingConfig.length === 0;
+
+const wallet = isBadgeSigningConfigured ? new Wallet(signerPk) : null;
 
 const domain = {
   name: "BattleArenaBadges",
   version: "1",
   chainId: Number(process.env.BADGE_CHAIN_ID || 8453),
-  verifyingContract: getAddress(process.env.BADGE_CONTRACT_ADDRESS),
+  verifyingContract: isBadgeSigningConfigured ? getAddress(contractAddress) : null,
 };
 
 const types = {
@@ -43,6 +45,10 @@ function toBytes32FromUuid(uuid) {
 }
 
 export async function signBadge(address, badgeKey) {
+  if (!isBadgeSigningConfigured) {
+    throw new Error(`Badge signing is not configured. Missing: ${missingConfig.join(", ")}`);
+  }
+
   const badgeId = BADGE_ID_MAP[badgeKey];
   if (!badgeId) {
     throw new Error(`Unknown badge id: ${badgeKey}`);
