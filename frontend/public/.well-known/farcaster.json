@@ -8,22 +8,22 @@
   "frame": {
     "version": "1",
     "name": "Battle Arena",
-    "iconUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app/assets/miniapp/icon.svg",
+    "iconUrl": "https://game-base-xi.vercel.app/assets/miniapp/icon.svg",
     "subtitle": "RPS + Tile Battles",
     "description": "Competitive mini-game on Base: pick RPS, choose high-value tiles, outplay bots and players, earn badges.",
     "primaryCategory": "games",
     "tags": ["games", "base", "rps", "strategy"],
-    "homeUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app",
+    "homeUrl": "https://game-base-xi.vercel.app",
     "webhookUrl": "https://gamebase-production.up.railway.app/webhook/farcaster",
-    "imageUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app/assets/miniapp/og.svg",
-    "heroImageUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app/assets/miniapp/og.svg",
+    "imageUrl": "https://game-base-xi.vercel.app/assets/miniapp/og.svg",
+    "heroImageUrl": "https://game-base-xi.vercel.app/assets/miniapp/og.svg",
     "splashImageUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app/assets/miniapp/splash.svg",
     "splashBackgroundColor": "#1a1447",
     "tagline": "Battle smart. Win big tiles.",
     "buttonTitle": "Play Battle Arena",
     "ogTitle": "Battle Arena on Base",
     "ogDescription": "Play competitive RPS + tile battles and climb the leaderboard.",
-    "ogImageUrl": "https://game-base-l76s4v4zm-rentabelnuys-projects.vercel.app/assets/miniapp/og.svg",
+    "ogImageUrl": "https://game-base-xi.vercel.app/assets/miniapp/og.svg",
     "castShareUrl": "https://warpcast.com/~/compose?text=I%20am%20playing%20Battle%20Arena%20on%20Base!%20%E2%9A%94%EF%B8%8F%20Try%20it%20now%3A%20https%3A%2F%2Fgame-base-l76s4v4zm-rentabelnuys-projects.vercel.app"
   }
 }
