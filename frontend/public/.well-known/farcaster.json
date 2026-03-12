@@ -3,7 +3,6 @@
     "header": "eyJmaWQiOjEwNTE0MTcsInR5cGUiOiJhdXRoIiwia2V5IjoiMHgwNDgwMDQ4YUVEMjQxNDJFQjgzZTJmQmIyOTM0MzJhYUE1NDg0NUQzIn0",
     "payload": "eyJkb21haW4iOiJnYW1lLWJhc2UteGkudmVyY2VsLmFwcCJ9",
     "signature": "VJTq7iNHZNFFhjThgvS6OagKIN/xSTp/vRJPJYuEZIZqwdHCqf/BUCR2yKiwgno/XOOA8XVWlUDbOPACxILAKRw="
-  }
 },
   "frame": {
     "version": "1",
