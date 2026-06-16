@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { joinLobby, submitRPS, submitTile, getLeaderboard, shareToFarcaster, shareToTwitter, copyShareLink } from "../api";
+import { joinLobby, submitRPS, submitTile, getLeaderboard, shareToTwitter, copyShareLink } from "../api";
 import { ApiError } from "../utils/apiClient.js";
 import BadgeDisplay from "./BadgeDisplay";
 
@@ -554,16 +554,6 @@ export default function GameBoard({ address }) {
               <div className="share-buttons-grid">
                 <button
                   className="btn-primary"
-                  onClick={() => shareToFarcaster({
-                    score: myScore,
-                    gameResult: myScore > enemyScore ? "win" : myScore < enemyScore ? "lose" : "draw",
-                    rank: playerRank
-                  })}
-                >
-                  🎭 Share to Farcaster
-                </button>
-                <button
-                  className="btn-secondary"
                   onClick={() => shareToTwitter({
                     score: myScore,
                     gameResult: myScore > enemyScore ? "win" : myScore < enemyScore ? "lose" : "draw",

@@ -49,7 +49,6 @@ body {
   margin-bottom: 10px;
 }
 
-.farcaster-badge,
 .base-badge {
   display: inline-flex;
   align-items: center;
@@ -59,13 +58,6 @@ body {
   font-size: 12px;
   font-weight: 600;
   margin-top: 8px;
-}
-
-.farcaster-badge {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(79, 70, 229, 0.2));
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  color: #c4b5fd;
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
 }
 
 .base-badge {
@@ -1557,11 +1549,6 @@ button,
   background: rgba(124, 58, 237, 0.1);
   border-radius: 8px;
   border: 1px solid rgba(124, 58, 237, 0.3);
-}
-
-.user-info.farcaster-user {
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .user-info.base-user {
