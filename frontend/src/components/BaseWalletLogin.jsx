@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ethers } from "ethers";
 import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
-import { getBaseAccountProvider, getPreferredWalletProvider } from "../utils/walletProvider";
+import { getBaseAccountProvider, getPreferredWalletProvider, getWalletConnectProvider } from "../utils/walletProvider";
 
 export default function BaseWalletLogin({ onLogin, title = "Login with Base Wallet" }) {
   const [error, setError] = useState("");
@@ -15,36 +15,20 @@ export default function BaseWalletLogin({ onLogin, title = "Login with Base Wall
         return;
       }
 
-      const onBase = await checkBaseNetwork(walletProvider);
-      if (!onBase) {
-        await switchToBaseNetwork(walletProvider);
-      }
-
-      const provider = new ethers.BrowserProvider(walletProvider);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-
-      const payload = {
-        address,
-        type: "evm-wallet-login",
-        timestamp: Date.now(),
-      };
-
-      const message = `
-Battle Arena Login
-address: ${payload.address}
-timestamp: ${payload.timestamp}
-      `.trim();
-
-      const signature = await signer.signMessage(message);
-
-      onLogin({
-        address,
-        signature,
-        provider: "evm",
-      });
+      await loginWithEvmProvider(walletProvider, "evm");
     } catch (e) {
       setError(e?.message || "Connection rejected");
+    }
+  };
+
+  const connectWalletConnect = async () => {
+    try {
+      setError("");
+      const walletProvider = await getWalletConnectProvider();
+      await walletProvider.connect();
+      await loginWithEvmProvider(walletProvider, "walletconnect");
+    } catch (e) {
+      setError(e?.message || "WalletConnect connection rejected");
     }
   };
 
@@ -98,6 +82,37 @@ timestamp: ${payload.timestamp}
     }
   };
 
+  const loginWithEvmProvider = async (walletProvider, providerName) => {
+    const onBase = await checkBaseNetwork(walletProvider);
+    if (!onBase) {
+      await switchToBaseNetwork(walletProvider);
+    }
+
+    const provider = new ethers.BrowserProvider(walletProvider);
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
+
+    const payload = {
+      address,
+      type: `${providerName}-login`,
+      timestamp: Date.now(),
+    };
+
+    const message = `
+Battle Arena Login
+address: ${payload.address}
+timestamp: ${payload.timestamp}
+    `.trim();
+
+    const signature = await signer.signMessage(message);
+
+    onLogin({
+      address,
+      signature,
+      provider: providerName,
+    });
+  };
+
   return (
     <div className="login-card">
       <h3>{title}</h3>
@@ -106,6 +121,9 @@ timestamp: ${payload.timestamp}
       </p>
       <button className="btn-primary" onClick={connectInjectedWallet}>
         Connect EVM Wallet
+      </button>
+      <button className="btn-secondary wallet-alt-button" onClick={connectWalletConnect}>
+        Connect with WalletConnect
       </button>
       <button className="btn-secondary wallet-alt-button" onClick={connectWithBaseAccount}>
         Sign in with Base Account

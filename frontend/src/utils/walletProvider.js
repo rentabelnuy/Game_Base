@@ -1,6 +1,8 @@
 import { createBaseAccountSDK } from "@base-org/account";
+import EthereumProvider from "@walletconnect/ethereum-provider";
 
 let baseAccountProvider = null;
+let walletConnectProvider = null;
 
 export async function getPreferredWalletProvider() {
   if (typeof window === "undefined") {
@@ -50,6 +52,34 @@ export function getBaseAccountProvider() {
   }
 
   return baseAccountProvider;
+}
+
+export async function getWalletConnectProvider() {
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  if (!projectId) {
+    throw new Error("WalletConnect is not configured. Add VITE_WALLETCONNECT_PROJECT_ID in Vercel.");
+  }
+
+  if (!walletConnectProvider) {
+    walletConnectProvider = await EthereumProvider.init({
+      projectId,
+      chains: [8453],
+      optionalChains: [84532],
+      showQrModal: true,
+      metadata: {
+        name: "Battle Arena",
+        description: "Competitive RPS and tile battles on Base.",
+        url: window.location.origin,
+        icons: [`${window.location.origin}/assets/base/icon.png`],
+      },
+      rpcMap: {
+        8453: "https://mainnet.base.org",
+        84532: "https://sepolia.base.org",
+      },
+    });
+  }
+
+  return walletConnectProvider;
 }
 
 function discoverInjectedProviders() {

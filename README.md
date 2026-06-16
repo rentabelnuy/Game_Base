@@ -62,6 +62,7 @@ Create `frontend/.env`:
 ```env
 VITE_API_BASE=http://localhost:3001
 VITE_BADGE_CONTRACT_ADDRESS=
+VITE_WALLETCONNECT_PROJECT_ID=
 ```
 
 Open:
@@ -121,6 +122,7 @@ Set frontend environment variables:
 ```env
 VITE_API_BASE=https://your-backend-domain
 VITE_BADGE_CONTRACT_ADDRESS=0x... # optional
+VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 ```
 
 After deploy, verify:
@@ -165,6 +167,7 @@ Base App uses standard web apps. This repo includes:
 
 - `frontend/public/manifest.webmanifest`
 - Base/EVM wallet discovery via EIP-6963
+- WalletConnect for mobile wallet apps
 - OpenGraph and Twitter preview metadata
 - App assets in `frontend/public/assets/base`
 

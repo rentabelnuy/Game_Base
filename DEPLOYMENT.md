@@ -41,6 +41,7 @@ Environment variables:
 ```env
 VITE_API_BASE=https://your-backend-domain
 VITE_BADGE_CONTRACT_ADDRESS=0x... # optional
+VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 ```
 
 Verify:
