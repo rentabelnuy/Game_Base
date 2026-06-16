@@ -120,6 +120,19 @@ h1 {
     0 0 25px rgba(56,189,248,0.2);
 }
 
+.login-hint {
+  margin-bottom: 15px;
+  font-size: 13px;
+}
+
+.wallet-alt-button {
+  margin-top: 10px;
+}
+
+.login-error {
+  margin-top: 10px;
+}
+
 /* ===============================
    BUTTONS
 ================================ */
@@ -274,19 +287,19 @@ button:hover {
 /* Mobile grid - 3 columns with proper alignment */
 @media (max-width: 480px) {
   .tiles-container {
-    grid-template-columns: repeat(3, 1fr);
-    padding: 10px;
-    margin: 4px 0; /* Reduced from 12px to move tiles up more */
+    grid-template-columns: repeat(4, 1fr);
+    padding: 8px;
+    margin: 4px 0 8px;
     min-height: auto;
-    gap: 6px;
+    gap: 5px;
   }
 }
 
 /* Ensure tiles are accessible on small screens */
 @media (max-width: 360px) {
   .tiles-container {
-    padding: 10px;
-    gap: 5px;
+    padding: 6px;
+    gap: 4px;
   }
 }
 
@@ -356,11 +369,11 @@ button:hover {
 @media (max-width: 480px) {
   .tile.grid-tile {
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 15px;
   }
   
   .tile.grid-tile .tile-value {
-    font-size: 18px;
+    font-size: 17px;
   }
 }
 
@@ -695,6 +708,66 @@ button,
   .game-info p {
     margin: 4px 0;
     font-size: 12px;
+  }
+}
+
+.tile-phase-info {
+  margin-bottom: 8px;
+}
+
+.tile-phase-title {
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 8px;
+  }
+
+  .app-header {
+    margin-bottom: 8px;
+  }
+
+  .app-header h1,
+  h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .base-badge {
+    padding: 4px 10px;
+    margin-top: 4px;
+  }
+
+  .user-info {
+    margin-bottom: 8px;
+    padding: 6px;
+  }
+
+  .nav-buttons {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    padding: 9px;
+    margin-bottom: 8px;
+  }
+
+  .tile-phase-info {
+    padding: 6px 8px;
+  }
+
+  .tile-phase-title {
+    display: none;
+  }
+
+  .round-indicator {
+    font-size: 16px;
+  }
+
+  .score-badge {
+    padding: 4px 8px;
   }
 }
 

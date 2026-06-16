@@ -48,7 +48,7 @@ export default function App() {
         <div className="login-wrapper">
           <BaseWalletLogin
             onLogin={handleLogin}
-            title={isBaseApp ? "Continue in Base App" : "Login with Base Wallet"}
+            title={isBaseApp ? "Continue in Base App" : "Connect Wallet"}
           />
           {!isBaseApp && (
             <div className="login-card quick-links">

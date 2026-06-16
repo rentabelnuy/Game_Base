@@ -3,18 +3,15 @@ import { ethers } from "ethers";
 import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
 import { getBaseAccountProvider, getPreferredWalletProvider } from "../utils/walletProvider";
 
-/**
- * BaseWalletLogin
- * Класичний EVM login для Base dApp
- */
 export default function BaseWalletLogin({ onLogin, title = "Login with Base Wallet" }) {
   const [error, setError] = useState("");
 
-  const connect = async () => {
+  const connectInjectedWallet = async () => {
     try {
+      setError("");
       const walletProvider = await getPreferredWalletProvider();
       if (!walletProvider) {
-        await connectWithBaseAccount();
+        setError("No browser wallet found. Open this site inside MetaMask, Rabby, Coinbase Wallet, or use Base Account below.");
         return;
       }
 
@@ -29,8 +26,8 @@ export default function BaseWalletLogin({ onLogin, title = "Login with Base Wall
 
       const payload = {
         address,
-        type: "base-wallet-login",
-        timestamp: Date.now()
+        type: "evm-wallet-login",
+        timestamp: Date.now(),
       };
 
       const message = `
@@ -44,70 +41,76 @@ timestamp: ${payload.timestamp}
       onLogin({
         address,
         signature,
-        provider: "base"
+        provider: "evm",
       });
-
     } catch (e) {
       setError(e?.message || "Connection rejected");
     }
   };
 
   const connectWithBaseAccount = async () => {
-    const baseProvider = getBaseAccountProvider();
-    if (!baseProvider) {
-      setError("Base Account is unavailable in this browser. Try opening the app in Base App or Coinbase Wallet.");
-      return;
-    }
-
     try {
-      await baseProvider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: BASE_NETWORK.chainId }],
-      });
-    } catch (error) {
-      // The connect request below can still open the Base Account flow.
-      console.warn("Base chain switch before connect failed:", error);
-    }
+      setError("");
+      const baseProvider = getBaseAccountProvider();
+      if (!baseProvider) {
+        setError("Base Account is unavailable in this browser.");
+        return;
+      }
 
-    const nonce = window.crypto?.randomUUID?.().replace(/-/g, "") || `${Date.now()}`;
-    const { accounts } = await baseProvider.request({
-      method: "wallet_connect",
-      params: [
-        {
-          version: "1",
-          capabilities: {
-            signInWithEthereum: {
-              nonce,
-              chainId: BASE_NETWORK.chainId,
+      try {
+        await baseProvider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: BASE_NETWORK.chainId }],
+        });
+      } catch (switchError) {
+        console.warn("Base chain switch before connect failed:", switchError);
+      }
+
+      const nonce = window.crypto?.randomUUID?.().replace(/-/g, "") || `${Date.now()}`;
+      const { accounts } = await baseProvider.request({
+        method: "wallet_connect",
+        params: [
+          {
+            version: "1",
+            capabilities: {
+              signInWithEthereum: {
+                nonce,
+                chainId: BASE_NETWORK.chainId,
+              },
             },
           },
-        },
-      ],
-    });
+        ],
+      });
 
-    const account = accounts?.[0];
-    if (!account?.address) {
-      throw new Error("Base Account did not return a wallet address.");
+      const account = accounts?.[0];
+      if (!account?.address) {
+        throw new Error("Base Account did not return a wallet address.");
+      }
+
+      onLogin({
+        address: account.address,
+        signature: account.capabilities?.signInWithEthereum?.signature || "",
+        message: account.capabilities?.signInWithEthereum?.message || "",
+        provider: "base-account",
+      });
+    } catch (e) {
+      setError(e?.message || "Base Account connection rejected");
     }
-
-    onLogin({
-      address: account.address,
-      signature: account.capabilities?.signInWithEthereum?.signature || "",
-      message: account.capabilities?.signInWithEthereum?.message || "",
-      provider: "base-account",
-    });
   };
 
   return (
     <div className="login-card">
-      <h3>🔵 {title}</h3>
-      <p className="hint" style={{ marginBottom: '15px', fontSize: '13px' }}>
-        Connect with Base Account, Base App, or any EVM wallet to play on Base.
+      <h3>{title}</h3>
+      <p className="hint login-hint">
+        Connect with MetaMask, Rabby, Coinbase Wallet, Base App, or Base Account.
       </p>
-      <button className="btn-secondary" onClick={connect}>
-        🔗 Connect Wallet
+      <button className="btn-primary" onClick={connectInjectedWallet}>
+        Connect EVM Wallet
       </button>
-      {error && <p className="hint error" style={{ marginTop: '10px' }}>{error}</p>}
+      <button className="btn-secondary wallet-alt-button" onClick={connectWithBaseAccount}>
+        Sign in with Base Account
+      </button>
+      {error && <p className="hint error login-error">{error}</p>}
     </div>
   );
 }

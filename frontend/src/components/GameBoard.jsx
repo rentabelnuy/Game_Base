@@ -391,19 +391,16 @@ export default function GameBoard({ address }) {
       {/* 🎲 TILE PHASE */}
       {phase === PHASES.TILES && (
         <>
-          <div className="game-info">
+          <div className="game-info tile-phase-info">
             <div className="game-header-compact">
               <h2 className="round-indicator">Round {round || 1} / {MAX_ROUNDS}</h2>
               <div className="score-badge">Score: {myScore}</div>
             </div>
-            <p><strong>Select a Tile</strong></p>
-            <p className="hint" style={{ marginBottom: '0' }}>Choose a tile to claim points. Collisions trigger RPS!</p>
+            <p className="tile-phase-title"><strong>Select a Tile</strong></p>
             {waitingForOpponent && (
               <p className="hint" style={{ marginTop: '8px', marginBottom: '0' }}>⏳ Waiting for opponents...</p>
             )}
           </div>
-
-          {renderBotsList()}
 
           <div className="tiles-container">
             {tiles.map((t, i) => (
@@ -418,6 +415,8 @@ export default function GameBoard({ address }) {
               </button>
             ))}
           </div>
+
+          {renderBotsList()}
         </>
       )}
 
