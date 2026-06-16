@@ -1,0 +1,29 @@
+{
+  "name": "Battle Arena",
+  "short_name": "Battle Arena",
+  "description": "Competitive RPS and tile battles on Base.",
+  "start_url": "/?source=base-app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a1447",
+  "theme_color": "#1a1447",
+  "orientation": "portrait-primary",
+  "categories": ["games", "finance", "entertainment"],
+  "icons": [
+    {
+      "src": "/assets/miniapp/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/miniapp/og.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Battle Arena preview"
+    }
+  ]
+}

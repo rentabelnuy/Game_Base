@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { getPreferredWalletProvider } from "./walletProvider";
 
 // Contract ABI (minimal - only functions we need)
 export const BADGE_CONTRACT_ABI = [
@@ -50,12 +51,13 @@ export const BASE_SEPOLIA_NETWORK = {
 /**
  * Get contract instance
  */
-export async function getBadgeContract(contractAddress) {
-  if (!window.ethereum) {
+export async function getBadgeContract(contractAddress, walletProvider = null) {
+  const injectedProvider = walletProvider || await getPreferredWalletProvider();
+  if (!injectedProvider) {
     throw new Error("No wallet detected");
   }
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
+  const provider = new ethers.BrowserProvider(injectedProvider);
   const signer = await provider.getSigner();
   return new ethers.Contract(contractAddress, BADGE_CONTRACT_ABI, signer);
 }
@@ -63,11 +65,12 @@ export async function getBadgeContract(contractAddress) {
 /**
  * Check if user is on Base network
  */
-export async function checkBaseNetwork() {
-  if (!window.ethereum) return false;
+export async function checkBaseNetwork(walletProvider = null) {
+  const injectedProvider = walletProvider || await getPreferredWalletProvider();
+  if (!injectedProvider) return false;
 
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    const provider = new ethers.BrowserProvider(injectedProvider);
     const network = await provider.getNetwork();
     return network.chainId === BigInt(8453) || network.chainId === BigInt(84532);
   } catch (error) {
@@ -78,14 +81,15 @@ export async function checkBaseNetwork() {
 /**
  * Switch to Base network
  */
-export async function switchToBaseNetwork() {
-  if (!window.ethereum) {
+export async function switchToBaseNetwork(walletProvider = null) {
+  const injectedProvider = walletProvider || await getPreferredWalletProvider();
+  if (!injectedProvider) {
     throw new Error("No wallet detected");
   }
 
   try {
     // Try to switch to Base mainnet
-    await window.ethereum.request({
+    await injectedProvider.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: BASE_NETWORK.chainId }],
     });
@@ -93,7 +97,7 @@ export async function switchToBaseNetwork() {
     // If chain doesn't exist, add it
     if (switchError.code === 4902) {
       try {
-        await window.ethereum.request({
+        await injectedProvider.request({
           method: "wallet_addEthereumChain",
           params: [BASE_NETWORK],
         });

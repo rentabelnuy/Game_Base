@@ -9,15 +9,24 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("game"); // "game", "leaderboard", "badges"
   const [isFarcaster, setIsFarcaster] = useState(false);
+  const [isBaseApp, setIsBaseApp] = useState(false);
   const [gameKey, setGameKey] = useState(0); // Key to force GameBoard reset
   
   // 🔧 DEV MODE - Set to false to enable wallet login
   const DEV_MODE = false;
   
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const userAgent = window.navigator.userAgent.toLowerCase();
+
     // Check if running in Farcaster
-    if (window.location.search.includes("farcaster") || window.parent !== window) {
+    if (searchParams.has("farcaster") || window.parent !== window) {
       setIsFarcaster(true);
+    }
+
+    // Base App opens standard web apps in an in-app browser.
+    if (searchParams.has("base-app") || searchParams.get("source") === "base-app" || userAgent.includes("base")) {
+      setIsBaseApp(true);
     }
     
     // Auto-login in dev mode
@@ -61,7 +70,10 @@ export default function App() {
           ) : (
             <>
               <FarcasterLogin onLogin={handleLogin} />
-              <BaseWalletLogin onLogin={handleLogin} title="Login with External Wallet" />
+              <BaseWalletLogin
+                onLogin={handleLogin}
+                title={isBaseApp ? "Continue in Base App" : "Login with External Wallet"}
+              />
               <div className="login-card quick-links">
                 <h3>🚀 Open Platforms</h3>
                 <button className="btn-secondary" onClick={handleOpenBaseApp}>Open Base App</button>
@@ -85,7 +97,7 @@ export default function App() {
         )}
         {!isFarcaster && (
           <div className="base-badge">
-            <span>🔵</span> Built on Base
+            <span>🔵</span> {isBaseApp ? "Base App Ready" : "Built on Base"}
           </div>
         )}
       </div>
@@ -101,7 +113,7 @@ export default function App() {
         )}
         {!isFarcaster && (
           <p className="hint" style={{ fontSize: '11px', marginTop: '4px', opacity: 0.8 }}>
-            Powered by Base • Fast & cheap transactions
+            {isBaseApp ? "Running in Base App • Connect and play" : "Powered by Base • Fast & cheap transactions"}
           </p>
         )}
       </div>

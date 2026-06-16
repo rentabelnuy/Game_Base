@@ -276,6 +276,23 @@ If you want NFT badge functionality:
 
 ### Part 5: Configure Base App Integration
 
+Base App now treats apps as standard web apps, so this project includes:
+- Web App Manifest: `frontend/public/manifest.webmanifest`
+- Base-friendly metadata in `frontend/index.html`
+- EIP-6963 wallet-provider discovery for embedded wallets
+
+To submit/register:
+1. Deploy frontend to Vercel and backend to Render/Fly/Railway.
+2. Confirm `https://your-frontend-domain/manifest.webmanifest` loads.
+3. Confirm `https://your-backend-domain/health` returns `{"status":"ok"}`.
+4. Register your app on Base.dev with:
+   - Name: Battle Arena
+   - Category: Games
+   - Primary URL: your frontend URL
+   - Icon: `/assets/miniapp/icon.png`
+   - Preview/Hero/Screenshot: `/assets/miniapp/og.png`
+
+
 1. **Base App Store** (if applicable):
    - Submit to Base App Store
    - Provide app metadata

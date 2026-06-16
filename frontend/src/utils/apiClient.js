@@ -34,28 +34,30 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
 
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `API Error: ${response.statusText}`,
-          response.status,
-          errorData
-        );
-      }
-
-      return await response.json();
+      return await this.fetchJson(url, options);
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
       }
+
+      const proxyUrl = this.getSameOriginProxyURL(endpoint);
+      if (proxyUrl && proxyUrl !== url) {
+        console.warn(`API request failed for ${url}; retrying through ${proxyUrl}`, error);
+        try {
+          return await this.fetchJson(proxyUrl, options);
+        } catch (proxyError) {
+          if (proxyError instanceof ApiError) {
+            throw proxyError;
+          }
+          console.error("API proxy retry failed:", proxyError);
+          throw new ApiError(
+            `Network error while calling ${url} and fallback ${proxyUrl}. ${proxyError.message || "Please check your connection."}`,
+            0,
+            { originalError: proxyError, firstError: error }
+          );
+        }
+      }
+
       // Network errors or other fetch failures
       console.error("API request failed:", error);
       throw new ApiError(
@@ -64,6 +66,40 @@ class ApiClient {
         { originalError: error }
       );
     }
+  }
+
+  async fetchJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.error || `API Error: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    return await response.json();
+  }
+
+  getSameOriginProxyURL(endpoint) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    const { origin, hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return null;
+    }
+
+    return `${origin}/api${endpoint}`;
   }
 
   /**

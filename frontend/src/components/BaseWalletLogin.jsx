@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ethers } from "ethers";
 import { checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
+import { getPreferredWalletProvider } from "../utils/walletProvider";
 
 /**
  * BaseWalletLogin
@@ -11,17 +12,18 @@ export default function BaseWalletLogin({ onLogin, title = "Login with Base Wall
 
   const connect = async () => {
     try {
-      if (!window.ethereum) {
-        setError("No wallet detected");
+      const walletProvider = await getPreferredWalletProvider();
+      if (!walletProvider) {
+        setError("No wallet detected. Open this app in Base App or connect an EVM wallet.");
         return;
       }
 
-      const onBase = await checkBaseNetwork();
+      const onBase = await checkBaseNetwork(walletProvider);
       if (!onBase) {
-        await switchToBaseNetwork();
+        await switchToBaseNetwork(walletProvider);
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
 
@@ -46,7 +48,7 @@ timestamp: ${payload.timestamp}
       });
 
     } catch (e) {
-      setError("Connection rejected");
+      setError(e?.message || "Connection rejected");
     }
   };
 
@@ -54,7 +56,7 @@ timestamp: ${payload.timestamp}
     <div className="login-card">
       <h3>🔵 {title}</h3>
       <p className="hint" style={{ marginBottom: '15px', fontSize: '13px' }}>
-        Connect your wallet to play on Base. Fast & cheap transactions guaranteed.
+        Connect with Base App or any EVM wallet to play on Base.
       </p>
       <button className="btn-secondary" onClick={connect}>
         🔗 Connect Wallet
