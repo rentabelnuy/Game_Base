@@ -1,6 +1,9 @@
-const BASE_RDNS = "com.coinbase.wallet";
+import { createBaseAccountSDK } from "@base-org/account";
 
-export async function getPreferredWalletProvider() {
+const BASE_RDNS = "com.coinbase.wallet";
+let baseAccountProvider = null;
+
+export async function getPreferredWalletProvider({ includeBaseAccountFallback = false } = {}) {
   if (typeof window === "undefined") {
     return null;
   }
@@ -22,7 +25,26 @@ export async function getPreferredWalletProvider() {
     );
   }
 
-  return window.ethereum || null;
+  if (window.ethereum) {
+    return window.ethereum;
+  }
+
+  return includeBaseAccountFallback ? getBaseAccountProvider() : null;
+}
+
+export function getBaseAccountProvider() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  if (!baseAccountProvider) {
+    baseAccountProvider = createBaseAccountSDK({
+      appName: "Battle Arena",
+      appLogoUrl: `${window.location.origin}/assets/base/icon.png`,
+    }).getProvider();
+  }
+
+  return baseAccountProvider;
 }
 
 function discoverInjectedProviders() {

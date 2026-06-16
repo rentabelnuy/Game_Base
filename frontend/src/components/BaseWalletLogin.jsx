@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ethers } from "ethers";
-import { checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
-import { getPreferredWalletProvider } from "../utils/walletProvider";
+import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
+import { getBaseAccountProvider, getPreferredWalletProvider } from "../utils/walletProvider";
 
 /**
  * BaseWalletLogin
@@ -14,7 +14,7 @@ export default function BaseWalletLogin({ onLogin, title = "Login with Base Wall
     try {
       const walletProvider = await getPreferredWalletProvider();
       if (!walletProvider) {
-        setError("No wallet detected. Open this app in Base App or connect an EVM wallet.");
+        await connectWithBaseAccount();
         return;
       }
 
@@ -52,11 +52,57 @@ timestamp: ${payload.timestamp}
     }
   };
 
+  const connectWithBaseAccount = async () => {
+    const baseProvider = getBaseAccountProvider();
+    if (!baseProvider) {
+      setError("Base Account is unavailable in this browser. Try opening the app in Base App or Coinbase Wallet.");
+      return;
+    }
+
+    try {
+      await baseProvider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: BASE_NETWORK.chainId }],
+      });
+    } catch (error) {
+      // The connect request below can still open the Base Account flow.
+      console.warn("Base chain switch before connect failed:", error);
+    }
+
+    const nonce = window.crypto?.randomUUID?.().replace(/-/g, "") || `${Date.now()}`;
+    const { accounts } = await baseProvider.request({
+      method: "wallet_connect",
+      params: [
+        {
+          version: "1",
+          capabilities: {
+            signInWithEthereum: {
+              nonce,
+              chainId: BASE_NETWORK.chainId,
+            },
+          },
+        },
+      ],
+    });
+
+    const account = accounts?.[0];
+    if (!account?.address) {
+      throw new Error("Base Account did not return a wallet address.");
+    }
+
+    onLogin({
+      address: account.address,
+      signature: account.capabilities?.signInWithEthereum?.signature || "",
+      message: account.capabilities?.signInWithEthereum?.message || "",
+      provider: "base-account",
+    });
+  };
+
   return (
     <div className="login-card">
       <h3>🔵 {title}</h3>
       <p className="hint" style={{ marginBottom: '15px', fontSize: '13px' }}>
-        Connect with Base App or any EVM wallet to play on Base.
+        Connect with Base Account, Base App, or any EVM wallet to play on Base.
       </p>
       <button className="btn-secondary" onClick={connect}>
         🔗 Connect Wallet
