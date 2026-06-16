@@ -3,6 +3,7 @@ import EthereumProvider from "@walletconnect/ethereum-provider";
 
 let baseAccountProvider = null;
 let walletConnectProvider = null;
+const DEFAULT_WALLETCONNECT_PROJECT_ID = "df7e56a6c295f0644de316ccd6a763dc";
 
 export async function getPreferredWalletProvider() {
   if (typeof window === "undefined") {
@@ -55,7 +56,7 @@ export function getBaseAccountProvider() {
 }
 
 export async function getWalletConnectProvider() {
-  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || DEFAULT_WALLETCONNECT_PROJECT_ID;
   if (!projectId) {
     throw new Error("WalletConnect is not configured. Add VITE_WALLETCONNECT_PROJECT_ID in Vercel.");
   }

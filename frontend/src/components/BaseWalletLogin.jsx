@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
-import { getBaseAccountProvider, getPreferredWalletProvider, getWalletConnectProvider } from "../utils/walletProvider";
+import { getBaseAccountProvider, getInjectedWalletProviders, getPreferredWalletProvider, getWalletConnectProvider } from "../utils/walletProvider";
 
 export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
   const [error, setError] = useState("");
+  const [hasInjectedWallet, setHasInjectedWallet] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    getInjectedWalletProviders().then((providers) => {
+      if (mounted) {
+        setHasInjectedWallet(providers.length > 0);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const connectInjectedWallet = async () => {
     try {
@@ -117,14 +131,16 @@ timestamp: ${payload.timestamp}
     <div className="login-card">
       <h3>{title}</h3>
       <p className="hint login-hint">
-        Connect with MetaMask, Rabby, Coinbase Wallet, Base App, or Base Account.
+        Use WalletConnect in mobile browsers, or connect directly inside MetaMask, Rabby, Coinbase Wallet, or Base App.
       </p>
-      <button className="btn-primary" onClick={connectInjectedWallet}>
-        Connect EVM Wallet
-      </button>
-      <button className="btn-secondary wallet-alt-button" onClick={connectWalletConnect}>
+      <button className={hasInjectedWallet ? "btn-secondary" : "btn-primary"} onClick={connectWalletConnect}>
         Connect with WalletConnect
       </button>
+      {hasInjectedWallet && (
+        <button className="btn-primary wallet-alt-button" onClick={connectInjectedWallet}>
+          Connect Browser Wallet
+        </button>
+      )}
       <button className="btn-secondary wallet-alt-button" onClick={connectWithBaseAccount}>
         Sign in with Base Account
       </button>
