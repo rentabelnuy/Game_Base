@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
 import { getBaseAccountProvider, getPreferredWalletProvider, getWalletConnectProvider } from "../utils/walletProvider";
 
-export default function BaseWalletLogin({ onLogin, title = "Login with Base Wallet" }) {
+export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
   const [error, setError] = useState("");
 
   const connectInjectedWallet = async () => {
