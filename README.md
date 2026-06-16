@@ -161,6 +161,14 @@ Then put the deployed contract address into:
 VITE_BADGE_CONTRACT_ADDRESS=0x...
 ```
 
+Also put it into Railway backend variables:
+
+```env
+BADGE_CONTRACT_ADDRESS=0x...
+BADGE_CHAIN_ID=8453
+BADGE_SIGNER_PK=the_private_key_for_BADGE_AUTHORIZED_SIGNER
+```
+
 ## Base App Submission
 
 Base App uses standard web apps. This repo includes:

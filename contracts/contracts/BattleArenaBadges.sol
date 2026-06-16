@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
- * @title BattleArenaBadgesBaseV2
- * @dev Safer ERC-1155 badges contract with EIP-712 signed claims for Base.
+ * @title BattleArenaBadges
+ * @notice ERC-1155 badge contract for Battle Arena on Base.
+ * @dev Minting is gated by backend EIP-712 signatures.
+ *
+ * The EIP-712 domain name MUST stay "BattleArenaBadges" because
+ * backend/badgeSigner.js signs with that domain name.
  */
-contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, Pausable {
+contract BattleArenaBadges is ERC1155, Ownable, EIP712, ReentrancyGuard, Pausable {
     using Strings for uint256;
 
     error InvalidSigner();
@@ -53,15 +57,14 @@ contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, P
     event BadgeMinted(address indexed to, uint256 indexed badgeId, uint256 amount);
     event BadgeRegistered(uint256 indexed badgeId, string name);
     event AuthorizedSignerUpdated(address indexed newSigner);
-    event ContractPaused(address indexed by);
-    event ContractUnpaused(address indexed by);
 
     constructor(string memory baseURI, address signer)
         ERC1155(baseURI)
         Ownable(msg.sender)
-        EIP712("BattleArenaBadgesBaseV2", "1")
+        EIP712("BattleArenaBadges", "1")
     {
         if (signer == address(0)) revert InvalidSigner();
+
         _baseMetadataURI = baseURI;
         authorizedSigner = signer;
 
@@ -77,38 +80,19 @@ contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, P
 
     function pause() external onlyOwner {
         _pause();
-        emit ContractPaused(msg.sender);
     }
 
     function unpause() external onlyOwner {
         _unpause();
-        emit ContractUnpaused(msg.sender);
     }
 
     function registerBadge(
         uint256 badgeId,
-        string memory name,
-        string memory description,
+        string calldata name,
+        string calldata description,
         uint256 maxSupply
     ) external onlyOwner {
         _registerBadge(badgeId, name, description, maxSupply);
-    }
-
-    function _registerBadge(
-        uint256 badgeId,
-        string memory name,
-        string memory description,
-        uint256 maxSupply
-    ) internal {
-        if (badges[badgeId].exists) revert BadgeAlreadyExists();
-        badges[badgeId] = BadgeInfo({
-            name: name,
-            description: description,
-            exists: true,
-            maxSupply: maxSupply,
-            currentSupply: 0
-        });
-        emit BadgeRegistered(badgeId, name);
     }
 
     function setAuthorizedSigner(address signer) external onlyOwner {
@@ -152,6 +136,65 @@ contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, P
         }
     }
 
+    function hasUserMinted(address user, uint256 badgeId) external view returns (bool) {
+        return hasMinted[user][badgeId];
+    }
+
+    function getBadgeInfo(uint256 badgeId) external view returns (BadgeInfo memory) {
+        return badges[badgeId];
+    }
+
+    function getUserBadges(address user) external view returns (uint256[] memory) {
+        uint256 totalBadges = 8;
+        uint256 count = 0;
+
+        for (uint256 badgeId = 1; badgeId <= totalBadges; badgeId++) {
+            if (hasMinted[user][badgeId]) {
+                count++;
+            }
+        }
+
+        uint256[] memory result = new uint256[](count);
+        uint256 index = 0;
+
+        for (uint256 badgeId = 1; badgeId <= totalBadges; badgeId++) {
+            if (hasMinted[user][badgeId]) {
+                result[index] = badgeId;
+                index++;
+            }
+        }
+
+        return result;
+    }
+
+    function setBaseURI(string calldata newBaseURI) external onlyOwner {
+        _baseMetadataURI = newBaseURI;
+        _setURI(newBaseURI);
+    }
+
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(_baseMetadataURI, tokenId.toString(), ".json"));
+    }
+
+    function _registerBadge(
+        uint256 badgeId,
+        string memory name,
+        string memory description,
+        uint256 maxSupply
+    ) internal {
+        if (badges[badgeId].exists) revert BadgeAlreadyExists();
+
+        badges[badgeId] = BadgeInfo({
+            name: name,
+            description: description,
+            exists: true,
+            maxSupply: maxSupply,
+            currentSupply: 0
+        });
+
+        emit BadgeRegistered(badgeId, name);
+    }
+
     function _validateAndConsumeAuthorization(
         address account,
         uint256 badgeId,
@@ -167,8 +210,7 @@ contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, P
         bytes32 digest = _hashTypedDataV4(structHash);
 
         if (usedAuthorizations[digest]) revert AuthorizationAlreadyUsed();
-        address recoveredSigner = ECDSA.recover(digest, signature);
-        if (recoveredSigner != authorizedSigner) revert InvalidAuthorization();
+        if (ECDSA.recover(digest, signature) != authorizedSigner) revert InvalidAuthorization();
 
         usedAuthorizations[digest] = true;
     }
@@ -177,51 +219,12 @@ contract BattleArenaBadgesBaseV2 is ERC1155, Ownable, EIP712, ReentrancyGuard, P
         BadgeInfo storage badge = badges[badgeId];
         if (!badge.exists) revert BadgeDoesNotExist();
         if (hasMinted[to][badgeId]) revert BadgeAlreadyMinted();
-
-        if (badge.maxSupply > 0 && badge.currentSupply >= badge.maxSupply) {
-            revert MaxSupplyReached();
-        }
+        if (badge.maxSupply > 0 && badge.currentSupply >= badge.maxSupply) revert MaxSupplyReached();
 
         hasMinted[to][badgeId] = true;
         badge.currentSupply += 1;
 
         _mint(to, badgeId, 1, "");
         emit BadgeMinted(to, badgeId, 1);
-    }
-
-    function hasUserMinted(address user, uint256 badgeId) external view returns (bool) {
-        return hasMinted[user][badgeId];
-    }
-
-    function getBadgeInfo(uint256 badgeId) external view returns (BadgeInfo memory) {
-        return badges[badgeId];
-    }
-
-    function getUserBadges(address user) external view returns (uint256[] memory) {
-        uint256[] memory userBadges = new uint256[](8);
-        uint256 count = 0;
-
-        for (uint256 i = 1; i <= 8; i++) {
-            if (hasMinted[user][i]) {
-                userBadges[count] = i;
-                count++;
-            }
-        }
-
-        uint256[] memory result = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            result[i] = userBadges[i];
-        }
-
-        return result;
-    }
-
-    function setBaseURI(string memory newBaseURI) external onlyOwner {
-        _baseMetadataURI = newBaseURI;
-        _setURI(newBaseURI);
-    }
-
-    function uri(uint256 tokenId) public view override returns (string memory) {
-        return string(abi.encodePacked(_baseMetadataURI, tokenId.toString(), ".json"));
     }
 }

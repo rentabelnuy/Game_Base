@@ -1,96 +1,105 @@
-# Battle Arena Badge Contract (Base V2)
+# Battle Arena Badges Contract
 
-ERC-1155 NFT contract for Battle Arena game badges deployed on Base network.
+This folder contains the Base badge minting contract for Battle Arena.
 
-Current deployment script deploys `BattleArenaBadgesBaseV2` (safer version with pause + reentrancy guard + bounded batch mint).
+## Contract
 
-## Setup
+Main contract:
 
-1. Install dependencies:
+```txt
+contracts/BattleArenaBadges.sol
+```
+
+It is an ERC-1155 contract with:
+
+- signature-gated badge minting
+- one mint per wallet per badge id
+- backend EIP-712 authorization
+- batch minting
+- pause/unpause
+- owner-controlled signer rotation
+- Base and Base Sepolia deployment config
+
+The EIP-712 domain is:
+
+```txt
+name: BattleArenaBadges
+version: 1
+chainId: 8453
+verifyingContract: deployed_contract_address
+```
+
+This must match `backend/badgeSigner.js`.
+
+## Install
+
 ```bash
-cd contracts
 npm install
 ```
 
-2. Create `.env` file:
-```env
-PRIVATE_KEY=your_private_key_here
-BASE_RPC_URL=https://mainnet.base.org
-BASESCAN_API_KEY=your_basescan_api_key (optional, for verification)
-BADGE_BASE_URI=https://your-domain.com/api/badges/
-BADGE_AUTHORIZED_SIGNER=0xYourBackendSignerAddress
-```
+## Environment
 
-## Deployment
+Copy:
 
-### Deploy to Base Mainnet:
 ```bash
-npm run deploy:base
+copy .env.example .env
 ```
 
-### Deploy to Base Sepolia (testnet):
+Fill:
+
+```env
+PRIVATE_KEY=deployment_wallet_private_key_without_0x
+BASE_RPC_URL=https://mainnet.base.org
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+BASESCAN_API_KEY=optional_basescan_api_key
+BADGE_AUTHORIZED_SIGNER=0x_backend_signer_wallet_address
+BADGE_BASE_URI=https://your-frontend-domain/badges/
+```
+
+`BADGE_AUTHORIZED_SIGNER` must be the public address derived from the backend `BADGE_SIGNER_PK`.
+
+## Compile
+
+```bash
+npm run compile
+```
+
+## Deploy to Base Sepolia
+
 ```bash
 npm run deploy:baseSepolia
 ```
 
-After deployment, save the contract address to your frontend `.env`:
-```env
-VITE_BADGE_CONTRACT_ADDRESS=0x...
+## Deploy to Base Mainnet
+
+```bash
+npm run deploy:base
 ```
 
-## Contract Functions
+After deploy, copy the printed contract address.
 
-### Public Functions (Users call these):
-- `mintBadge(uint256 badgeId, bytes32 requestId, uint256 deadline, bytes signature)` - Mint with backend EIP-712 authorization
-- `mintBadges(uint256[] badgeIds, bytes32[] requestIds, uint256[] deadlines, bytes[] signatures)` - Batch mint with per-badge authorizations
-- `hasUserMinted(address user, uint256 badgeId)` - Check if user minted a badge
-- `getUserBadges(address user)` - Get all badges minted by user
-- `getBadgeInfo(uint256 badgeId)` - Get badge information
+## Backend Variables
 
-### Owner Functions:
-- `registerBadge(uint256, string, string, uint256)` - Register new badge type
-- `setAuthorizedSigner(address)` - Rotate backend signer key
-- `setBaseURI(string)` - Update metadata URI
-
-
-
-## Backend signer env
-
-Backend must set:
+Set these in Railway:
 
 ```env
-BADGE_SIGNER_PK=0x...
-BADGE_CONTRACT_ADDRESS=0x...
+BADGE_SIGNER_PK=backend_signer_private_key_without_0x
+BADGE_CONTRACT_ADDRESS=deployed_contract_address
 BADGE_CHAIN_ID=8453
 ```
 
-## Badge IDs
+For Base Sepolia testing:
 
-1. Rookie Fighter (5+ points)
-2. Skilled Fighter (25+ points)
-3. Battle Champion (100+ points)
-4. Legendary Warrior (200+ points)
-5. First Victory
-6. Hot Streak
-7. Survivor
-8. Veteran
-
-## Gas Costs
-
-- Deployment: ~$1-3 (one-time)
-- Mint per badge: ~$0.01-0.05 (user pays)
-
-## Verification
-
-After deployment:
-```bash
-npm run verify
+```env
+BADGE_CHAIN_ID=84532
 ```
 
-## Frontend Integration
+## Frontend Variables
 
-Set `VITE_BADGE_CONTRACT_ADDRESS` in your frontend `.env` file to enable badge minting functionality.
+Set this in Vercel:
 
+```env
+VITE_BADGE_CONTRACT_ADDRESS=deployed_contract_address
+```
 
-
-
+Then redeploy frontend and backend.

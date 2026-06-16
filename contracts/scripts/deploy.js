@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("Deploying BattleArenaBadgesBaseV2 contract...");
+  console.log("Deploying BattleArenaBadges contract...");
 
   const baseURI = process.env.BADGE_BASE_URI || "https://battle-arena.xyz/api/badges/";
   const signer = process.env.BADGE_AUTHORIZED_SIGNER;
@@ -10,13 +10,13 @@ async function main() {
     throw new Error("BADGE_AUTHORIZED_SIGNER is required");
   }
 
-  const BattleArenaBadgesBaseV2 = await hre.ethers.getContractFactory("BattleArenaBadgesBaseV2");
-  const contract = await BattleArenaBadgesBaseV2.deploy(baseURI, signer);
+  const BattleArenaBadges = await hre.ethers.getContractFactory("BattleArenaBadges");
+  const contract = await BattleArenaBadges.deploy(baseURI, signer);
 
   await contract.waitForDeployment();
   const address = await contract.getAddress();
 
-  console.log("BattleArenaBadgesBaseV2 deployed to:", address);
+  console.log("BattleArenaBadges deployed to:", address);
   console.log("\nSave this address to your .env file:");
   console.log(`BADGE_CONTRACT_ADDRESS=${address}`);
 
