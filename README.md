@@ -1,26 +1,34 @@
 # Battle Arena
 
-Battle Arena is a competitive Rock Paper Scissors and tile-selection game built for Base. Players connect a Base-compatible EVM wallet, play rounds against bots or other players, climb the leaderboard, and can optionally claim badge rewards through a Base smart contract.
+Battle Arena is a mobile-first strategy game built for Base. Players connect a Base-compatible wallet, choose a Rock/Paper/Scissors weapon, compete for high-value tiles, climb the leaderboard, and can mint earned achievement badges on Base.
 
-## Features
+Live app:
 
-- Base App and EVM wallet login
-- Base network detection and switch prompt
-- Rock Paper Scissors collision mechanics
-- Strategic tile selection with leaderboards
-- Optional NFT badge claiming on Base
-- Mobile-first Vite frontend
-- Railway-ready Express backend
-- Standard Web App manifest for Base App submission
+```txt
+https://game-base-md2u.vercel.app
+```
+
+## Highlights
+
+- Base-only web app, prepared for Base App submission
+- Wallet support through injected EVM wallets, WalletConnect, and Base Account
+- Rock/Paper/Scissors collision mechanics
+- Tile-selection rounds with bot opponents
+- Leaderboard and player stats API
+- ERC-1155 badge contract with backend EIP-712 mint authorization
+- Vite + React frontend
+- Express backend ready for Railway
+- Hardhat contract workspace for Base and Base Sepolia
+
+## Project Structure
+
+```txt
+backend/     Express API, game rounds, leaderboard, badge authorization
+frontend/    React/Vite app, wallet connection, game UI, badge minting
+contracts/   Hardhat project and ERC-1155 badge contract
+```
 
 ## Local Development
-
-### Prerequisites
-
-- Node.js 18 or newer
-- npm
-- Git
-- An EVM wallet configured for Base
 
 ### Backend
 
@@ -30,14 +38,17 @@ npm install
 npm start
 ```
 
-Create `backend/.env`:
+Create `backend/.env` from `backend/.env.example`:
 
 ```env
 PORT=3001
-BADGE_SIGNER_PK=your_private_key_here_64_chars_hex
+RATE_LIMIT=40
+BADGE_SIGNER_PK=
+BADGE_CONTRACT_ADDRESS=
+BADGE_CHAIN_ID=8453
 ```
 
-The backend health check is:
+Health check:
 
 ```txt
 http://localhost:3001/health
@@ -57,7 +68,7 @@ npm install
 npm run dev
 ```
 
-Create `frontend/.env`:
+Create `frontend/.env` from `frontend/.env.example`:
 
 ```env
 VITE_API_BASE=http://localhost:3001
@@ -71,44 +82,39 @@ Open:
 http://localhost:5173
 ```
 
-## Production Deployment
+### Contracts
 
-### 1. Deploy Backend
-
-Recommended: Railway.
-
-Use the root `railway.json` if deploying the whole repository:
-
-```json
-{
-  "buildCommand": "npm --prefix backend install",
-  "startCommand": "npm --prefix backend start"
-}
+```bash
+cd contracts
+npm install
+npm run compile
 ```
 
-Set backend environment variables:
+See [contracts/README.md](contracts/README.md) for Base Sepolia and Base mainnet deployment steps.
+
+## Production Deployment
+
+### Backend: Railway
+
+Use the root `railway.json` if deploying from the repository root.
+
+Required variables:
 
 ```env
 PORT=3001
-BADGE_SIGNER_PK=your_production_private_key_64_chars_hex
 NODE_ENV=production
+BADGE_SIGNER_PK=backend_signer_private_key
+BADGE_CONTRACT_ADDRESS=deployed_badge_contract_address
+BADGE_CHAIN_ID=8453
 ```
 
-After deploy, verify:
+Verify after deploy:
 
 ```txt
 https://your-backend-domain/health
 ```
 
-Expected:
-
-```json
-{"status":"ok"}
-```
-
-### 2. Deploy Frontend
-
-Recommended: Vercel.
+### Frontend: Vercel
 
 Project settings:
 
@@ -117,104 +123,49 @@ Project settings:
 - Build command: `npm run build`
 - Output directory: `dist`
 
-Set frontend environment variables:
+Required variables:
 
 ```env
 VITE_API_BASE=https://your-backend-domain
-VITE_BADGE_CONTRACT_ADDRESS=0x... # optional
-VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-```
-
-After deploy, verify:
-
-```txt
-https://your-frontend-domain/manifest.webmanifest
-```
-
-### 3. Optional Badge Contract
-
-If you want on-chain badge claiming:
-
-```bash
-cd contracts
-npm install
-```
-
-Create `contracts/.env`:
-
-```env
-PRIVATE_KEY=your_deployment_wallet_private_key
-BASE_RPC_URL=https://mainnet.base.org
-BASESCAN_API_KEY=your_api_key_optional
-BADGE_BASE_URI=https://your-domain.com/api/badges/
-```
-
-Deploy:
-
-```bash
-npm run deploy:base
-```
-
-Then put the deployed contract address into:
-
-```env
-VITE_BADGE_CONTRACT_ADDRESS=0x...
-```
-
-Also put it into Railway backend variables:
-
-```env
-BADGE_CONTRACT_ADDRESS=0x...
-BADGE_CHAIN_ID=8453
-BADGE_SIGNER_PK=the_private_key_for_BADGE_AUTHORIZED_SIGNER
+VITE_BADGE_CONTRACT_ADDRESS=deployed_badge_contract_address
+VITE_WALLETCONNECT_PROJECT_ID=walletconnect_project_id
 ```
 
 ## Base App Submission
 
-Base App uses standard web apps. This repo includes:
+This app uses the standard web app model for Base App.
 
-- `frontend/public/manifest.webmanifest`
-- Base/EVM wallet discovery via EIP-6963
-- WalletConnect for mobile wallet apps
-- OpenGraph and Twitter preview metadata
-- App assets in `frontend/public/assets/base`
+Included:
 
-Use these values when registering/submitting:
+- Web app manifest: `frontend/public/manifest.webmanifest`
+- Base verification meta tag in `frontend/index.html`
+- App icon and preview assets in `frontend/public/assets/base`
+- WalletConnect and Base Account support for mobile wallet flows
+
+Suggested submission values:
 
 - Name: `Battle Arena`
 - Category: `Games`
-- Primary URL: `https://your-frontend-domain`
-- Manifest URL: `https://your-frontend-domain/manifest.webmanifest`
-- Icon: `https://your-frontend-domain/assets/base/icon.png`
-- Preview image: `https://your-frontend-domain/assets/base/og.png`
-- Backend health check: `https://your-backend-domain/health`
+- Primary URL: `https://game-base-md2u.vercel.app`
+- Manifest URL: `https://game-base-md2u.vercel.app/manifest.webmanifest`
+- Icon: `https://game-base-md2u.vercel.app/assets/base/icon.png`
+- Preview image: `https://game-base-md2u.vercel.app/assets/base/og.png`
 
-## Before Publishing
+## Badge Contract
 
-- Confirm `DEV_MODE` is `false` in `frontend/src/App.jsx`
-- Confirm `VITE_API_BASE` points to the deployed backend
-- Confirm `/health` works on the backend
-- Confirm `/manifest.webmanifest` works on the frontend
-- Connect with Base App or Coinbase Wallet
-- Confirm the wallet switches to Base
-- Play a full game round
-- Confirm leaderboard requests work
-- If badges are enabled, confirm badge claiming on Base
+The badge contract is an ERC-1155 contract deployed from the Hardhat workspace. Minting is protected by EIP-712 signatures from the backend signer, so users can only mint badges they earned in the game.
 
-## Useful Commands
+Current Base mainnet contract used during setup:
 
-```bash
-cd frontend
-npm run build
+```txt
+0x7f573970E7218D7503139b913674651A489953Ff
 ```
 
-```bash
-cd backend
-npm start
-```
+Keep production addresses in hosting environment variables. Do not commit private keys or `.env` files.
 
 ## API
 
+- `GET /health`
 - `POST /lobby/join`
 - `POST /round/rps`
 - `POST /round/tile`
@@ -223,6 +174,13 @@ npm start
 - `GET /badge/:address`
 - `POST /badge/claim`
 
-## Notes
+## Security Notes
 
-This app is Base-only.
+- Real `.env` files are ignored by Git.
+- Do not commit private keys, seed phrases, API keys, or deployment secrets.
+- Use a separate backend signer wallet for badge authorization.
+- Rotate any key that has ever been shared in chat, screenshots, logs, or public issues.
+
+## License
+
+MIT
