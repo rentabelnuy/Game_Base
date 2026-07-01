@@ -1,26 +1,27 @@
-# Battle Arena Badges Contract
+# Battle Arena Badge Contract
 
-This folder contains the Base badge minting contract for Battle Arena.
+This Hardhat workspace deploys the ERC-1155 badge contract used by Battle Arena.
 
 ## Contract
 
 Main contract:
 
 ```txt
-contracts/BattleArenaBadges.sol
+contracts/contracts/BattleArenaBadges.sol
 ```
 
-It is an ERC-1155 contract with:
+Features:
 
-- signature-gated badge minting
+- ERC-1155 badges
 - one mint per wallet per badge id
-- backend EIP-712 authorization
+- EIP-712 backend authorization
+- replay protection through request ids
 - batch minting
 - pause/unpause
 - owner-controlled signer rotation
-- Base and Base Sepolia deployment config
+- Base and Base Sepolia network config
 
-The EIP-712 domain is:
+EIP-712 domain:
 
 ```txt
 name: BattleArenaBadges
@@ -29,7 +30,7 @@ chainId: 8453
 verifyingContract: deployed_contract_address
 ```
 
-This must match `backend/badgeSigner.js`.
+The domain must match `backend/badgeSigner.js`.
 
 ## Install
 
@@ -39,24 +40,24 @@ npm install
 
 ## Environment
 
-Copy:
+Copy the example file:
 
-```bash
+```cmd
 copy .env.example .env
 ```
 
-Fill:
+Fill `.env`:
 
 ```env
 PRIVATE_KEY=deployment_wallet_private_key_without_0x
 BASE_RPC_URL=https://mainnet.base.org
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
-BASESCAN_API_KEY=optional_basescan_api_key
+BASESCAN_API_KEY=
 BADGE_AUTHORIZED_SIGNER=0x_backend_signer_wallet_address
 BADGE_BASE_URI=https://your-frontend-domain/badges/
 ```
 
-`BADGE_AUTHORIZED_SIGNER` must be the public address derived from the backend `BADGE_SIGNER_PK`.
+`BADGE_AUTHORIZED_SIGNER` is the public address derived from the backend `BADGE_SIGNER_PK`.
 
 ## Compile
 
@@ -70,36 +71,59 @@ npm run compile
 npm run deploy:baseSepolia
 ```
 
+Use Sepolia for testing. Railway should use:
+
+```env
+BADGE_CHAIN_ID=84532
+```
+
 ## Deploy to Base Mainnet
 
 ```bash
 npm run deploy:base
 ```
 
-After deploy, copy the printed contract address.
-
-## Backend Variables
-
-Set these in Railway:
+Use mainnet for production. Railway should use:
 
 ```env
-BADGE_SIGNER_PK=backend_signer_private_key_without_0x
-BADGE_CONTRACT_ADDRESS=deployed_contract_address
 BADGE_CHAIN_ID=8453
 ```
 
-For Base Sepolia testing:
+## After Deployment
+
+Copy the printed contract address into Railway:
 
 ```env
-BADGE_CHAIN_ID=84532
+BADGE_CONTRACT_ADDRESS=deployed_contract_address
+BADGE_CHAIN_ID=8453
+BADGE_SIGNER_PK=backend_signer_private_key_without_0x
 ```
 
-## Frontend Variables
-
-Set this in Vercel:
+Copy the same contract address into Vercel:
 
 ```env
 VITE_BADGE_CONTRACT_ADDRESS=deployed_contract_address
 ```
 
-Then redeploy frontend and backend.
+Then redeploy both backend and frontend.
+
+## Verify on Basescan
+
+Verification is optional for app functionality. To verify automatically, create a Basescan API key and set:
+
+```env
+BASESCAN_API_KEY=your_basescan_api_key
+```
+
+Then rerun the deploy script or verify manually through Hardhat/Basescan.
+
+## Signer Rotation
+
+If the backend signer private key is exposed, rotate it immediately:
+
+```js
+const c = await ethers.getContractAt("BattleArenaBadges", "deployed_contract_address")
+await c.setAuthorizedSigner("0xNewSignerAddress")
+```
+
+Update Railway with the new signer private key and redeploy the backend.
