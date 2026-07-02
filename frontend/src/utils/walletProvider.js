@@ -83,6 +83,22 @@ export async function getWalletConnectProvider() {
   return walletConnectProvider;
 }
 
+export async function disconnectWalletProvider(providerName) {
+  if (providerName === "walletconnect" && walletConnectProvider?.disconnect) {
+    await walletConnectProvider.disconnect();
+    walletConnectProvider = null;
+    return;
+  }
+
+  if (providerName === "base-account" && baseAccountProvider?.request) {
+    try {
+      await baseAccountProvider.request({ method: "wallet_disconnect" });
+    } catch (error) {
+      console.warn("Base Account disconnect request failed:", error);
+    }
+  }
+}
+
 function discoverInjectedProviders() {
   return new Promise((resolve) => {
     if (typeof window === "undefined") {

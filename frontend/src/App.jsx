@@ -3,12 +3,14 @@ import GameBoard from "./components/GameBoard";
 import Leaderboard from "./components/Leaderboard";
 import BadgeDisplay from "./components/BadgeDisplay";
 import BaseWalletLogin from "./components/BaseWalletLogin";
+import { disconnectWalletProvider } from "./utils/walletProvider";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("game");
   const [isBaseApp, setIsBaseApp] = useState(false);
   const [gameKey, setGameKey] = useState(0);
+  const [baseOpenMessage, setBaseOpenMessage] = useState("");
 
   const DEV_MODE = false;
 
@@ -37,7 +39,27 @@ export default function App() {
     setUser(loginData);
   };
 
-  const handleOpenBaseApp = () => {
+  const handleLogout = async () => {
+    try {
+      await disconnectWalletProvider(user?.provider);
+    } catch (error) {
+      console.warn("Wallet disconnect failed:", error);
+    } finally {
+      setUser(null);
+      setView("game");
+      setGameKey((prev) => prev + 1);
+    }
+  };
+
+  const handleOpenBaseApp = async () => {
+    const appUrl = window.location.origin;
+    try {
+      await navigator.clipboard?.writeText(appUrl);
+      setBaseOpenMessage("App link copied. Open Base App and paste it in Browse/Search if it opens Home.");
+    } catch {
+      setBaseOpenMessage("Open Base App, then paste this app URL in Browse/Search.");
+    }
+
     window.open("https://base.app", "_blank", "noopener,noreferrer");
   };
 
@@ -56,6 +78,7 @@ export default function App() {
               <button className="btn-secondary" onClick={handleOpenBaseApp}>
                 Open Base App
               </button>
+              {baseOpenMessage && <p className="hint base-open-hint">{baseOpenMessage}</p>}
             </div>
           )}
         </div>
@@ -70,6 +93,9 @@ export default function App() {
         <div className="base-badge">
           <span>Base</span> {isBaseApp ? "Running in Base App" : "Built on Base"}
         </div>
+        <button className="logout-button" onClick={handleLogout}>
+          Disconnect
+        </button>
       </div>
 
       <div className="user-info base-user">
