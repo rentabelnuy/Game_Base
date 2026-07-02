@@ -67,6 +67,23 @@ body {
   box-shadow: 0 0 15px rgba(0, 82, 255, 0.2);
 }
 
+.logout-button {
+  width: auto;
+  min-width: 110px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  color: #fecdd3;
+  box-shadow: none;
+  font-size: 12px;
+}
+
+.logout-button:hover {
+  box-shadow: 0 0 14px rgba(251, 113, 133, 0.3);
+}
+
 /* ===============================
    TYPOGRAPHY
 ================================ */
@@ -131,6 +148,7 @@ h1 {
 
 .login-error {
   margin-top: 10px;
+  overflow-wrap: break-word;
 }
 
 /* ===============================
@@ -1664,4 +1682,9 @@ button,
 
 .quick-links button {
   width: 100%;
+}
+
+.base-open-hint {
+  margin: 10px 0 0;
+  line-height: 1.4;
 }

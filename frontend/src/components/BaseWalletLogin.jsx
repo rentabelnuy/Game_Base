@@ -3,6 +3,33 @@ import { ethers } from "ethers";
 import { BASE_NETWORK, checkBaseNetwork, switchToBaseNetwork } from "../utils/contract";
 import { getBaseAccountProvider, getInjectedWalletProviders, getPreferredWalletProvider, getWalletConnectProvider } from "../utils/walletProvider";
 
+function getFriendlyWalletError(error, fallback = "Wallet connection was cancelled.") {
+  const message = error?.message || "";
+  const code = error?.code || error?.info?.error?.code || error?.data?.code;
+
+  if (
+    code === 4001 ||
+    code === "ACTION_REJECTED" ||
+    message.includes("user rejected") ||
+    message.includes("User rejected") ||
+    message.includes("User denied") ||
+    message.includes("ethers-user-denied") ||
+    message.includes("rejectAllApprovals")
+  ) {
+    return "Signature request was rejected.";
+  }
+
+  if (message.includes("wallet_switchEthereumChain")) {
+    return "Base network switch was rejected.";
+  }
+
+  if (message.includes("No browser wallet")) {
+    return message;
+  }
+
+  return fallback;
+}
+
 export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
   const [error, setError] = useState("");
   const [hasInjectedWallet, setHasInjectedWallet] = useState(false);
@@ -31,7 +58,7 @@ export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
 
       await loginWithEvmProvider(walletProvider, "evm");
     } catch (e) {
-      setError(e?.message || "Connection rejected");
+      setError(getFriendlyWalletError(e, "Browser wallet connection was cancelled."));
     }
   };
 
@@ -42,7 +69,7 @@ export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
       await walletProvider.connect();
       await loginWithEvmProvider(walletProvider, "walletconnect");
     } catch (e) {
-      setError(e?.message || "WalletConnect connection rejected");
+      setError(getFriendlyWalletError(e, "WalletConnect connection was cancelled."));
     }
   };
 
@@ -92,7 +119,7 @@ export default function BaseWalletLogin({ onLogin, title = "Connect Wallet" }) {
         provider: "base-account",
       });
     } catch (e) {
-      setError(e?.message || "Base Account connection rejected");
+      setError(getFriendlyWalletError(e, "Base Account connection was cancelled."));
     }
   };
 
