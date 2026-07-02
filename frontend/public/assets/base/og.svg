@@ -1,11 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Battle Arena OG Image">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Battle Arena preview">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#120b36"/>
-      <stop offset="100%" stop-color="#3b1fb8"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#09051f"/>
+      <stop offset="100%" stop-color="#3e1fb8"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#896eff"/>
+      <stop offset="100%" stop-color="#2eceff"/>
+    </linearGradient>
+    <linearGradient id="blade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#edf9ff"/>
+      <stop offset="100%" stop-color="#56aaff"/>
     </linearGradient>
   </defs>
-  <rect width="1200" height="630" fill="url(#g)"/>
-  <text x="600" y="280" font-size="88" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif">⚔ Battle Arena</text>
-  <text x="600" y="360" font-size="40" text-anchor="middle" fill="#cfc7ff" font-family="Arial, sans-serif">Compete. Collide. Conquer on Base.</text>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="600" cy="270" r="400" fill="#4591ff" opacity=".18"/>
+  <rect x="38" y="36" width="1124" height="558" fill="none" stroke="#2ccaff" stroke-width="4"/>
+  <rect x="62" y="58" width="1076" height="514" fill="none" stroke="#7d41ff" stroke-width="2" opacity=".55"/>
+
+  <g opacity=".55" stroke="#3d8fff" stroke-width="2">
+    <path d="M180 370h840M205 384h790M230 398h740M255 412h690M280 426h640M305 440h590M330 454h540M355 468h490M380 482h440M405 496h390"/>
+    <path d="M320 370 150 520M380 370 270 520M440 370 390 520M500 370 510 520M560 370 585 520M640 370 615 520M700 370 690 520M760 370 810 520M820 370 930 520M880 370 1050 520"/>
+  </g>
+
+  <g transform="translate(600 340) rotate(-42)">
+    <path d="M-18-170 0-230 18-170 16 90-16 90Z" fill="url(#blade)" stroke="#d8f7ff" stroke-width="5"/>
+    <path d="M0-190V80" stroke="#fff" stroke-opacity=".65" stroke-width="3"/>
+    <rect x="-105" y="70" width="210" height="36" fill="#ffcd40" stroke="#ffec74" stroke-width="3"/>
+    <rect x="-16" y="104" width="32" height="100" fill="#ff4c7f" stroke="#ffcd40" stroke-width="2"/>
+    <circle cx="0" cy="224" r="34" fill="#ffcd40"/>
+    <circle cx="0" cy="224" r="19" fill="#673bff"/>
+  </g>
+
+  <g transform="translate(600 340) rotate(42)">
+    <path d="M-18-170 0-230 18-170 16 90-16 90Z" fill="url(#blade)" stroke="#d8f7ff" stroke-width="5"/>
+    <path d="M0-190V80" stroke="#fff" stroke-opacity=".65" stroke-width="3"/>
+    <rect x="-105" y="70" width="210" height="36" fill="#ffcd40" stroke="#ffec74" stroke-width="3"/>
+    <rect x="-16" y="104" width="32" height="100" fill="#28cbff" stroke="#ffcd40" stroke-width="2"/>
+    <circle cx="0" cy="224" r="34" fill="#ffcd40"/>
+    <circle cx="0" cy="224" r="19" fill="#673bff"/>
+  </g>
+
+  <circle cx="600" cy="340" r="48" fill="#ffcd40"/>
+  <circle cx="600" cy="340" r="26" fill="#6744ff"/>
+  <circle cx="600" cy="340" r="8" fill="#27d5ff"/>
+
+  <text x="600" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="92" font-weight="700" fill="#000" opacity=".48">Battle Arena</text>
+  <text x="600" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="92" font-weight="700" fill="url(#title)">Battle Arena</text>
 </svg>
