@@ -19,7 +19,7 @@
   ],
   "screenshots": [
     {
-      "src": "/assets/base/og.png",
+      "src": "/assets/base/og-centered.png",
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
