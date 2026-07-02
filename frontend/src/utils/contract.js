@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { Attribution } from "ox/erc8021";
 import { getPreferredWalletProvider } from "./walletProvider";
 
 // Contract ABI (minimal - only functions we need)
@@ -22,6 +23,9 @@ export const BADGE_IDS = {
   survivor: 7,
   veteran: 8
 };
+
+const BUILDER_CODES = ["bc_efviyscl"];
+const BUILDER_CODE_DATA_SUFFIX = Attribution.toDataSuffix({ codes: BUILDER_CODES });
 
 // Base network config
 export const BASE_NETWORK = {
@@ -47,6 +51,27 @@ export const BASE_SEPOLIA_NETWORK = {
   rpcUrls: ["https://sepolia.base.org"],
   blockExplorerUrls: ["https://sepolia.basescan.org"],
 };
+
+function appendBuilderCodeSuffix(data) {
+  if (!data || data === "0x") {
+    return BUILDER_CODE_DATA_SUFFIX;
+  }
+
+  return `${data}${BUILDER_CODE_DATA_SUFFIX.slice(2)}`;
+}
+
+async function sendBuilderAttributedTransaction(contract, transactionRequest) {
+  if (!contract.runner?.sendTransaction) {
+    throw new Error("Connected wallet cannot send transactions");
+  }
+
+  const tx = await contract.runner.sendTransaction({
+    ...transactionRequest,
+    data: appendBuilderCodeSuffix(transactionRequest.data),
+  });
+
+  return await tx.wait();
+}
 
 /**
  * Get contract instance
@@ -115,13 +140,14 @@ export async function switchToBaseNetwork(walletProvider = null) {
  */
 export async function mintBadgeToWallet(contractAddress, authorization) {
   const contract = await getBadgeContract(contractAddress);
-  const tx = await contract.mintBadge(
+  const transactionRequest = await contract.mintBadge.populateTransaction(
     authorization.badgeId,
     authorization.requestId,
     authorization.deadline,
     authorization.signature
   );
-  return await tx.wait();
+
+  return await sendBuilderAttributedTransaction(contract, transactionRequest);
 }
 
 /**
@@ -129,13 +155,14 @@ export async function mintBadgeToWallet(contractAddress, authorization) {
  */
 export async function mintBadgesToWallet(contractAddress, payload) {
   const contract = await getBadgeContract(contractAddress);
-  const tx = await contract.mintBadges(
+  const transactionRequest = await contract.mintBadges.populateTransaction(
     payload.badgeIds,
     payload.requestIds,
     payload.deadlines,
     payload.signatures
   );
-  return await tx.wait();
+
+  return await sendBuilderAttributedTransaction(contract, transactionRequest);
 }
 
 /**
