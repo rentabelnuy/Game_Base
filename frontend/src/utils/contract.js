@@ -9,8 +9,21 @@ export const BADGE_CONTRACT_ABI = [
   "function hasUserMinted(address user, uint256 badgeId) external view returns (bool)",
   "function getUserBadges(address user) external view returns (uint256[])",
   "function getBadgeInfo(uint256 badgeId) external view returns ((string name, string description, bool exists, uint256 maxSupply, uint256 currentSupply))",
+  "error InvalidSigner()",
+  "error AuthorizationExpired()",
+  "error AuthorizationAlreadyUsed()",
+  "error InvalidAuthorization()",
+  "error BadgeAlreadyExists()",
+  "error BadgeDoesNotExist()",
+  "error BadgeAlreadyMinted()",
+  "error MaxSupplyReached()",
+  "error LengthMismatch()",
+  "error EmptyBatch()",
+  "error BatchTooLarge()",
   "event BadgeMinted(address indexed to, uint256 indexed badgeId, uint256 amount)"
 ];
+
+const BADGE_CONTRACT_INTERFACE = new ethers.Interface(BADGE_CONTRACT_ABI);
 
 // Badge ID mapping (matches contract)
 export const BADGE_IDS = {
@@ -81,6 +94,58 @@ async function sendBuilderAttributedTransaction(contract, transactionRequest) {
 
     const tx = await contract.runner.sendTransaction(transactionRequest);
     return await tx.wait();
+  }
+}
+
+function findErrorData(error) {
+  if (!error || typeof error !== "object") return null;
+
+  if (typeof error.data === "string" && error.data.startsWith("0x")) {
+    return error.data;
+  }
+
+  for (const key of ["revert", "error", "info"]) {
+    const data = findErrorData(error[key]);
+    if (data) return data;
+  }
+
+  return null;
+}
+
+export function getBadgeMintError(error) {
+  const data = findErrorData(error);
+  if (!data) return null;
+
+  try {
+    const parsed = BADGE_CONTRACT_INTERFACE.parseError(data);
+    return parsed ? { name: parsed.name, args: parsed.args } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getBadgeMintErrorMessage(error) {
+  const parsed = getBadgeMintError(error);
+
+  switch (parsed?.name) {
+    case "BadgeAlreadyMinted":
+      return "This badge is already minted in your wallet.";
+    case "AuthorizationExpired":
+      return "The mint authorization expired. Please try again.";
+    case "AuthorizationAlreadyUsed":
+      return "This mint authorization was already used. Please try again.";
+    case "InvalidAuthorization":
+      return "The mint authorization is invalid. Please refresh the page and try again.";
+    case "BadgeDoesNotExist":
+      return "This badge is not registered in the contract.";
+    case "MaxSupplyReached":
+      return "This badge has reached its mint limit.";
+    case "LengthMismatch":
+    case "EmptyBatch":
+    case "BatchTooLarge":
+      return "The badge mint request is invalid. Please try again.";
+    default:
+      return null;
   }
 }
 

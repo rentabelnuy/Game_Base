@@ -7,6 +7,8 @@ import {
   checkBaseNetwork, 
   switchToBaseNetwork,
   estimateMintGas,
+  getBadgeMintError,
+  getBadgeMintErrorMessage,
   BADGE_IDS 
 } from "../utils/contract";
 
@@ -50,12 +52,12 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
     }
   }, [address, contractAddress]);
 
-  const checkMintedStatuses = async () => {
-    if (!contractAddress || !address || badges.length === 0) return;
+  const checkMintedStatuses = async (badgeList = badges) => {
+    if (!contractAddress || !address || badgeList.length === 0) return;
     
     try {
       const statuses = {};
-      for (const badge of badges) {
+      for (const badge of badgeList) {
         const badgeId = BADGE_IDS[badge.id];
         if (badgeId) {
           try {
@@ -77,12 +79,13 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
     setLoading(true);
     try {
       const data = await getPlayerBadges(address);
-      setBadges(data.badges || []);
+      const loadedBadges = data.badges || [];
+      setBadges(loadedBadges);
       setStats(data.stats || null);
       
       // Check minted status after loading badges
       if (contractAddress) {
-        setTimeout(() => checkMintedStatuses(), 100);
+        await checkMintedStatuses(loadedBadges);
       }
     } catch (error) {
       console.error("Failed to load badges:", error);
@@ -164,11 +167,17 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
       
     } catch (error) {
       console.error("Failed to mint badge:", error);
+      const contractError = getBadgeMintError(error);
+      const contractErrorMessage = getBadgeMintErrorMessage(error);
+
       if (error.message.includes("user rejected") || error.message.includes("User denied")) {
         alert("Transaction cancelled");
-      } else if (error.message.includes("already minted")) {
-        alert("You've already minted this badge!");
+      } else if (contractError?.name === "BadgeAlreadyMinted" || error.message.includes("already minted")) {
+        alert(contractErrorMessage || "You've already minted this badge!");
         setMintedStatus(prev => ({ ...prev, [badgeId]: true }));
+        await checkMintedStatuses();
+      } else if (contractErrorMessage) {
+        alert(contractErrorMessage);
       } else {
         alert(`Failed to mint badge: ${error.message}`);
       }
