@@ -65,12 +65,23 @@ async function sendBuilderAttributedTransaction(contract, transactionRequest) {
     throw new Error("Connected wallet cannot send transactions");
   }
 
-  const tx = await contract.runner.sendTransaction({
-    ...transactionRequest,
-    data: appendBuilderCodeSuffix(transactionRequest.data),
-  });
+  try {
+    const tx = await contract.runner.sendTransaction({
+      ...transactionRequest,
+      data: appendBuilderCodeSuffix(transactionRequest.data),
+    });
 
-  return await tx.wait();
+    return await tx.wait();
+  } catch (error) {
+    if (error?.code === "ACTION_REJECTED") {
+      throw error;
+    }
+
+    console.warn("Builder Code attribution failed; retrying transaction without suffix.", error);
+
+    const tx = await contract.runner.sendTransaction(transactionRequest);
+    return await tx.wait();
+  }
 }
 
 /**
