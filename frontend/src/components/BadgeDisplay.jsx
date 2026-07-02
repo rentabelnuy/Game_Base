@@ -9,6 +9,7 @@ import {
   estimateMintGas,
   getBadgeMintError,
   getBadgeMintErrorMessage,
+  getUserMintedBadges,
   BADGE_IDS 
 } from "../utils/contract";
 
@@ -30,6 +31,32 @@ const BADGE_INFO = {
   survivor: { emoji: "🛡️", name: "Survivor", color: "#7c3aed", rarity: RARITY.EPIC },
   veteran: { emoji: "🎖️", name: "Veteran", color: "#6366f1", rarity: RARITY.RARE }
 };
+
+const BADGE_KEYS_BY_ID = Object.fromEntries(
+  Object.entries(BADGE_IDS).map(([key, id]) => [id, key])
+);
+
+function mergeBadges(earnedBadges, mintedBadgeIds) {
+  const byId = new Map();
+
+  earnedBadges.forEach((badge) => {
+    byId.set(badge.id, badge);
+  });
+
+  mintedBadgeIds.forEach((numericBadgeId) => {
+    const badgeKey = BADGE_KEYS_BY_ID[Number(numericBadgeId)];
+    const badgeInfo = BADGE_INFO[badgeKey];
+    if (badgeKey && badgeInfo && !byId.has(badgeKey)) {
+      byId.set(badgeKey, {
+        id: badgeKey,
+        name: badgeInfo.name,
+        description: "Minted on Base",
+      });
+    }
+  });
+
+  return Array.from(byId.values());
+}
 
 export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
   const [badges, setBadges] = useState([]);
@@ -80,12 +107,31 @@ export default function BadgeDisplay({ address, score, onBadgeClaimed }) {
     try {
       const data = await getPlayerBadges(address);
       const loadedBadges = data.badges || [];
-      setBadges(loadedBadges);
+      let visibleBadges = loadedBadges;
+
+      if (contractAddress) {
+        try {
+          const mintedBadgeIds = await getUserMintedBadges(contractAddress, address);
+          visibleBadges = mergeBadges(loadedBadges, mintedBadgeIds);
+          const onchainStatuses = {};
+          mintedBadgeIds.forEach((numericBadgeId) => {
+            const badgeKey = BADGE_KEYS_BY_ID[Number(numericBadgeId)];
+            if (badgeKey) {
+              onchainStatuses[badgeKey] = true;
+            }
+          });
+          setMintedStatus(prev => ({ ...prev, ...onchainStatuses }));
+        } catch (error) {
+          console.error("Failed to load on-chain badges:", error);
+        }
+      }
+
+      setBadges(visibleBadges);
       setStats(data.stats || null);
       
       // Check minted status after loading badges
       if (contractAddress) {
-        await checkMintedStatuses(loadedBadges);
+        await checkMintedStatuses(visibleBadges);
       }
     } catch (error) {
       console.error("Failed to load badges:", error);

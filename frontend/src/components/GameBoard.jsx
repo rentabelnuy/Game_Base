@@ -39,23 +39,45 @@ export default function GameBoard({ address }) {
   const [aggregatedTileWinners, setAggregatedTileWinners] = useState(new Map()); // Map of winner -> { name, totalPoints, rounds: [{ round, tile, collision, eliminatedPlayers }] }
   const pollingIntervalRef = useRef(null); // Store interval for cleanup
 
+  const startNewBattle = useCallback(async () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    setMyScore(0);
+    setEnemyScore(0);
+    setGameId(null);
+    setPhase(PHASES.RPS);
+    setRps(null);
+    setRpsSubmitted(false);
+    setTiles([]);
+    setSelectedTile(null);
+    setRound(0);
+    setRoundResult(null);
+    setWaitingForOpponent(false);
+    setPlayerRank(null);
+    setGameStarted(false);
+    setBotsInfo([]);
+    setAggregatedTileWinners(new Map());
+
+    try {
+      const res = await joinLobby(address);
+      setGameId(res.gameId);
+    } catch (error) {
+      console.error("Failed to join lobby:", error);
+      const message = error instanceof ApiError
+        ? error.message
+        : "Failed to join game. Please refresh and try again.";
+      alert(message);
+    }
+  }, [address]);
+
   // Join lobby on mount
   useEffect(() => {
-    joinLobby(address)
-      .then(res => {
-        setGameId(res.gameId);
-        // Reset aggregated winners for new game
-        setAggregatedTileWinners(new Map());
-      })
-      .catch(error => {
-        console.error("Failed to join lobby:", error);
-        const message = error instanceof ApiError 
-          ? error.message 
-          : "Failed to join game. Please refresh and try again.";
-        alert(message);
-      });
+    startNewBattle();
     // Don't load leaderboard on mount - only after round 1 completes
-  }, [address]);
+  }, [startNewBattle]);
 
   const loadPlayerRank = async () => {
     try {
@@ -496,60 +518,62 @@ export default function GameBoard({ address }) {
         </div>
       )}
 
-      {/* ☠️ ELIMINATED */}
+      {/* ELIMINATED */}
       {phase === PHASES.ELIMINATED && (
         <div className="card danger">
-          <h2>💀 You Have Been Eliminated!</h2>
+          <h2>You Have Been Eliminated!</h2>
           <p>You collided with another player on the same tile and lost the Rock Paper Scissors battle.</p>
           <div className="score-display">
             <h3>Final Scores:</h3>
             <p>Your Final Score: {myScore}</p>
             <p>Opponent Final Score: {enemyScore}</p>
             <p className={myScore > enemyScore ? "winner" : "loser"}>
-              {myScore > enemyScore ? "🏆 You Won!" : "😔 You Lost"}
+              {myScore > enemyScore ? "You Won!" : "You Lost"}
             </p>
           </div>
+          <button className="btn-primary" onClick={startNewBattle} style={{ marginTop: "15px" }}>
+            Restart Battle
+          </button>
         </div>
       )}
 
-      {/* 🏁 GAME OVER */}
+      {/* GAME OVER */}
       {phase === PHASES.GAME_OVER && roundResult && (
         <>
           <div className="card">
-            <h2>🏁 Game Over!</h2>
+            <h2>Game Over!</h2>
             <div className="score-display">
               <h3>Final Scores:</h3>
               <p><strong>Your Score: {myScore}</strong></p>
               {playerRank && (
-                <p className="rank-display">🏆 Your Rank: #{playerRank}</p>
+                <p className="rank-display">Your Rank: #{playerRank}</p>
               )}
-              {/* Show final winner with name */}
               {roundResult.finalWinner && (
-                <div style={{ 
-                  marginTop: '20px', 
-                  padding: '15px', 
-                  backgroundColor: roundResult.finalWinner.player === address ? 'rgba(76, 175, 80, 0.2)' : 'rgba(74, 158, 255, 0.2)',
-                  borderRadius: '8px',
-                  border: `2px solid ${roundResult.finalWinner.player === address ? '#4caf50' : '#4a9eff'}`
+                <div style={{
+                  marginTop: "20px",
+                  padding: "15px",
+                  backgroundColor: roundResult.finalWinner.player === address ? "rgba(76, 175, 80, 0.2)" : "rgba(74, 158, 255, 0.2)",
+                  borderRadius: "8px",
+                  border: `2px solid ${roundResult.finalWinner.player === address ? "#4caf50" : "#4a9eff"}`
                 }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>🏆 Champion:</h3>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>
+                  <h3 style={{ margin: "0 0 10px 0", color: "#fff" }}>Champion:</h3>
+                  <div style={{ fontSize: "24px", fontWeight: "700", color: "#fff" }}>
                     {roundResult.finalWinner.name}
                   </div>
-                  <div style={{ fontSize: '18px', color: '#aaa', marginTop: '5px' }}>
+                  <div style={{ fontSize: "18px", color: "#aaa", marginTop: "5px" }}>
                     Final Score: {roundResult.finalWinner.score} points
                   </div>
                 </div>
               )}
-              <div className={`final-result ${myScore > enemyScore ? "winner" : myScore < enemyScore ? "loser" : "draw"}`} style={{ marginTop: '20px' }}>
-                {myScore > enemyScore && <h2>🏆 You Won!</h2>}
-                {myScore < enemyScore && <h2>😔 You Lost</h2>}
-                {myScore === enemyScore && <h2>🤝 It's a Draw!</h2>}
+              <div className={`final-result ${myScore > enemyScore ? "winner" : myScore < enemyScore ? "loser" : "draw"}`} style={{ marginTop: "20px" }}>
+                {myScore > enemyScore && <h2>You Won!</h2>}
+                {myScore < enemyScore && <h2>You Lost</h2>}
+                {myScore === enemyScore && <h2>It's a Draw!</h2>}
               </div>
             </div>
-            
+
             <div className="share-buttons">
-              <h4>Share Your Victory:</h4>
+              <h4>Share Your Battle:</h4>
               <div className="share-buttons-grid">
                 <button
                   className="btn-primary"
@@ -559,7 +583,7 @@ export default function GameBoard({ address }) {
                     rank: playerRank
                   })}
                 >
-                  🐦 Share to Twitter/X
+                  Share to Twitter/X
                 </button>
                 <button
                   className="btn-secondary"
@@ -574,16 +598,16 @@ export default function GameBoard({ address }) {
                     }
                   }}
                 >
-                  📋 Copy Link
+                  Copy Link
                 </button>
               </div>
-              
-              <button 
-                className="btn-primary" 
-                onClick={() => window.location.reload()}
-                style={{ marginTop: '15px' }}
+
+              <button
+                className="btn-primary"
+                onClick={startNewBattle}
+                style={{ marginTop: "15px" }}
               >
-                🎮 Play Again
+                Play Again
               </button>
             </div>
           </div>

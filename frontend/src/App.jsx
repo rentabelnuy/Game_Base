@@ -91,7 +91,7 @@ export default function App() {
       <div className="app-header">
         <h1>Battle Arena</h1>
         <div className="base-badge">
-          <span>Base</span> {isBaseApp ? "Running in Base App" : "Built on Base"}
+          <span>{isBaseApp ? "Base App" : "Base"}</span>
         </div>
         <button className="logout-button" onClick={handleLogout}>
           Disconnect
